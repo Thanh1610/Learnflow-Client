@@ -3,44 +3,104 @@ export interface FetchError<T = unknown> extends Error {
   info?: T;
 }
 
+type FetcherInit<TBody> = Omit<RequestInit, 'body'> & { body?: TBody };
+
 const defaultHeaders: HeadersInit = {
   'Content-Type': 'application/json',
   Accept: 'application/json',
 };
 
+const JSON_MIME = 'application/json';
+
+const isJsonContentType = (contentType?: string | null) =>
+  Boolean(contentType?.includes(JSON_MIME));
+
+async function drainResponse(response: Response) {
+  const parseAsJson = isJsonContentType(response.headers.get('content-type'));
+  return parseAsJson ? response.json() : response.text();
+}
+
+function buildRequestInit<TBody>(init?: FetcherInit<TBody>): RequestInit {
+  const method = init?.method ?? (init?.body ? 'POST' : 'GET');
+  const headers = {
+    ...defaultHeaders,
+    ...(init?.headers ?? {}),
+  };
+  const body =
+    typeof init?.body === 'string' || init?.body === undefined
+      ? (init?.body as BodyInit | null | undefined)
+      : JSON.stringify(init?.body);
+
+  return {
+    ...init,
+    method,
+    headers,
+    body,
+  };
+}
+
+function buildFetchError(status: number, payload: unknown): FetchError {
+  const message =
+    typeof payload === 'object' && payload !== null && 'error' in payload
+      ? ((payload as { error?: string }).error ?? 'Request failed')
+      : 'Request failed';
+
+  const error = new Error(message) as FetchError;
+  error.status = status;
+  error.info = payload;
+
+  return error;
+}
+
+async function refreshAuthTokens() {
+  try {
+    const response = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      await drainResponse(response);
+      return false;
+    }
+
+    await drainResponse(response);
+    return true;
+  } catch (error) {
+    console.error('Failed to refresh auth tokens:', error);
+    return false;
+  }
+}
+
 export async function fetcher<TResponse = unknown, TBody = unknown>(
   input: RequestInfo,
-  init?: Omit<RequestInit, 'body'> & { body?: TBody }
+  init?: FetcherInit<TBody>
 ): Promise<TResponse> {
-  const mergedInit: RequestInit = {
-    method: init?.method ?? (init?.body ? 'POST' : 'GET'),
-    ...init,
-    headers: {
-      ...defaultHeaders,
-      ...(init?.headers ?? {}),
-    },
-    body:
-      typeof init?.body === 'string' || init?.body === undefined
-        ? (init?.body as BodyInit | null | undefined)
-        : JSON.stringify(init?.body),
+  const requestInit = buildRequestInit(init);
+
+  const sendRequest = async (hasRefreshed = false): Promise<TResponse> => {
+    const response = await fetch(input, {
+      ...requestInit,
+      credentials: 'include',
+    });
+
+    const payload = await drainResponse(response);
+
+    if (response.ok) {
+      return payload as TResponse;
+    }
+
+    if (response.status === 401 && !hasRefreshed) {
+      const refreshed = await refreshAuthTokens();
+      if (refreshed) {
+        return sendRequest(true);
+      }
+    }
+
+    throw buildFetchError(response.status, payload);
   };
 
-  const response = await fetch(input, mergedInit);
-
-  const contentType = response.headers.get('content-type');
-  const parseAsJson = contentType?.includes('application/json');
-  const payload = parseAsJson ? await response.json() : await response.text();
-
-  if (!response.ok) {
-    const error = new Error(
-      (payload as { error?: string })?.error ?? 'Request failed'
-    ) as FetchError;
-    error.status = response.status;
-    error.info = payload;
-    throw error;
-  }
-
-  return payload as TResponse;
+  return sendRequest();
 }
 
 export default fetcher;

@@ -17,12 +17,17 @@ model User {
   address               String?
   avatar                String?
   gender                Gender?
-  password              String
+  password              String?
   phone                 String?
   role                  Role      @default(USER)
+  provider              Provider  @default(EMAIL_PASSWORD)
+  googleId              String?   @unique
+  githubId              String? @unique
   deletedAt             DateTime?
   refreshToken          String?
   refreshTokenExpiresAt DateTime?
+  clientRefreshToken          String?
+  clientRefreshTokenExpiresAt DateTime?
 }
 
 enum Gender {
@@ -34,4 +39,10 @@ enum Role {
   SYSTEM_ADMIN
   DEPT_ADMIN
   USER
+}
+
+enum Provider {
+  EMAIL_PASSWORD
+  GOOGLE
+  GITHUB
 }
