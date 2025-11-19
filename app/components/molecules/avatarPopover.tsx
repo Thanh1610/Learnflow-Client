@@ -1,5 +1,6 @@
-import { useAuthStore, type AuthUser } from '@/app/stores/useAuthStore';
+import { useAuthStore } from '@/app/stores/useAuthStore';
 import { PAGE_ROUTES } from '@/config/pageRoutes';
+import type { UserType } from '@/types/user.type.ts';
 import { Listbox, ListboxItem } from '@heroui/listbox';
 import {
   Avatar,
@@ -14,14 +15,15 @@ import {
   PopoverTrigger,
   User,
 } from '@heroui/react';
-import { LogOut, SettingsIcon, User as UserIcon } from 'lucide-react';
+import { Loader2, LogOut, SettingsIcon, User as UserIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import React from 'react';
-export const UserCard = ({ user }: { user: AuthUser }) => {
+import React, { useState } from 'react';
+export const UserCard = ({ user }: { user: UserType }) => {
   const defaultAvatar = '/image/default_avatar.jpg';
   const clear = useAuthStore(state => state.clear);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const t = useTranslations('sidebar.footer');
   const handleAction = (key: React.Key) => {
     switch (key) {
@@ -40,12 +42,14 @@ export const UserCard = ({ user }: { user: AuthUser }) => {
   const handleLogout = async () => {
     try {
       // Gọi API logout để xóa cookies và refresh token trong database
+      setIsLoading(true);
       await fetch('/api/auth/logout', {
         method: 'POST',
       });
     } catch (error) {
       console.error('Error logging out:', error);
     } finally {
+      setIsLoading(false);
       // Xóa state trong store và redirect
       clear();
       router.push(PAGE_ROUTES.LOGIN);
@@ -99,7 +103,14 @@ export const UserCard = ({ user }: { user: AuthUser }) => {
           size="sm"
           variant="light"
           onPress={handleLogout}
-          startContent={<LogOut className="w-4 h-4" />}
+          isDisabled={isLoading}
+          startContent={
+            isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <LogOut className="w-4 h-4" />
+            )
+          }
         >
           {t('logout')}
         </Button>
