@@ -23,6 +23,8 @@ model User {
   deletedAt             DateTime?
   refreshToken          String?
   refreshTokenExpiresAt DateTime?
+  clientRefreshToken          String?
+  clientRefreshTokenExpiresAt DateTime?
 }
 
 enum Gender {

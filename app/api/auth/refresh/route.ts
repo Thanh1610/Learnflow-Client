@@ -10,7 +10,7 @@ const REFRESH_TOKEN_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // 7 days
 export async function POST() {
   try {
     const cookieStore = await cookies();
-    const refreshToken = cookieStore.get('auth_refresh_token')?.value;
+    const refreshToken = cookieStore.get('client_refresh_token')?.value;
 
     if (!refreshToken) {
       return NextResponse.json(
@@ -80,7 +80,7 @@ export async function POST() {
     );
 
     // Set cookies mới
-    response.cookies.set('auth_token', token, {
+    response.cookies.set('client_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -88,7 +88,7 @@ export async function POST() {
       maxAge: ACCESS_TOKEN_MAX_AGE_SECONDS,
     });
 
-    response.cookies.set('auth_refresh_token', newRefreshToken, {
+    response.cookies.set('client_refresh_token', newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

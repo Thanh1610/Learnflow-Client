@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 export async function POST() {
   try {
     const cookieStore = await cookies();
-    const refreshToken = cookieStore.get('auth_refresh_token')?.value;
+    const refreshToken = cookieStore.get('client_refresh_token')?.value;
 
     // Xóa refresh token trong database nếu có
     if (refreshToken) {
@@ -29,7 +29,7 @@ export async function POST() {
       { status: 200 }
     );
 
-    response.cookies.set('auth_token', '', {
+    response.cookies.set('client_token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -37,7 +37,7 @@ export async function POST() {
       maxAge: 0,
     });
 
-    response.cookies.set('auth_refresh_token', '', {
+    response.cookies.set('client_refresh_token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -8,7 +8,7 @@ import {
   type RegisterFormValues,
 } from '@/app/register/schema';
 import { PAGE_ROUTES } from '@/config/pageRoutes';
-import { Button, Checkbox, Divider, Input, Link } from '@heroui/react';
+import { Button, Checkbox, Input, Link } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Icon } from '@iconify/react';
 import { useTranslations } from 'next-intl';
@@ -215,27 +215,7 @@ export default function RegisterForm() {
             {t('signUp')}
           </Button>
         </form>
-        <div className="flex items-center gap-4 py-2">
-          <Divider className="flex-1" />
-          <p className="text-tiny text-default-500 shrink-0">{t('or')}</p>
-          <Divider className="flex-1" />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Button
-            startContent={<Icon icon="flat-color-icons:google" width={24} />}
-            variant="bordered"
-          >
-            {t('signUpWithGoogle')}
-          </Button>
-          <Button
-            startContent={
-              <Icon className="text-default-500" icon="fe:github" width={24} />
-            }
-            variant="bordered"
-          >
-            {t('signUpWithGithub')}
-          </Button>
-        </div>
+
         <p className="text-small text-center">
           {t('alreadyHaveAccount')}&nbsp;
           <Link href={PAGE_ROUTES.LOGIN} size="sm">

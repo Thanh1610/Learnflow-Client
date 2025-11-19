@@ -86,7 +86,7 @@ export async function POST(req: Request) {
       { status: 200 }
     );
 
-    response.cookies.set('auth_token', token, {
+    response.cookies.set('client_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
       maxAge: ACCESS_TOKEN_MAX_AGE_SECONDS,
     });
 
-    response.cookies.set('auth_refresh_token', refreshToken, {
+    response.cookies.set('client_refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

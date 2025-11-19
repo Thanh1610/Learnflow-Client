@@ -55,9 +55,6 @@ export default function LoginForm() {
       password: values.password,
     });
     if (response?.success) {
-      if (response.data?.role === 'USER') {
-        return toast.error(t('accessDenied'));
-      }
       setSession({
         user: response.data ?? null,
         token: response.token ?? null,
