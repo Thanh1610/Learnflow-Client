@@ -9,6 +9,8 @@
     "lint": "eslint",
     "db:test": "tsx scripts/test-database.ts",
     "db:studio": "prisma studio",
+    "db:pull": "tsx scripts/pull-migrations.ts",
+    "db:generate": "prisma generate",
     "prepare": "husky",
     "fix": "eslint . --fix"
   },

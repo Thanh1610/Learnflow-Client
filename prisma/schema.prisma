@@ -22,12 +22,24 @@ model User {
   role                  Role      @default(USER)
   provider              Provider  @default(EMAIL_PASSWORD)
   googleId              String?   @unique
-  githubId              String? @unique
+  githubId              String?   @unique
   deletedAt             DateTime?
   refreshToken          String?
   refreshTokenExpiresAt DateTime?
   clientRefreshToken          String?
   clientRefreshTokenExpiresAt DateTime?
+  departments           Department[] @relation("UserDepartments")
+}
+
+model Department {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  users       User[]    @relation("UserDepartments")
+  userIds     Int[]     @default([])
 }
 
 enum Gender {

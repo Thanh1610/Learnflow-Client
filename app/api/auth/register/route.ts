@@ -2,6 +2,8 @@ import prisma from '@/lib/prisma';
 import { hash } from 'bcryptjs';
 import { NextResponse } from 'next/server';
 
+const GENERAL_DEPARTMENT_NAME = 'General Department';
+
 export async function POST(req: Request) {
   try {
     const { name, email, password } = await req.json();
@@ -27,8 +29,33 @@ export async function POST(req: Request) {
     }
 
     const hashed = await hash(password, 12);
+
+    // Tìm General Department (đã được seed sẵn trong DB)
+    const generalDepartment = await prisma.department.findUnique({
+      where: { name: GENERAL_DEPARTMENT_NAME },
+    });
+
+    if (!generalDepartment) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'General Department not found',
+        },
+        { status: 500 }
+      );
+    }
+
     const user = await prisma.user.create({
-      data: { name, email, password: hashed },
+      data: {
+        name,
+        email,
+        password: hashed,
+        departments: {
+          connect: {
+            id: generalDepartment.id,
+          },
+        },
+      },
     });
 
     return NextResponse.json(
