@@ -4,6 +4,7 @@ import { PAGE_ROUTES } from '@/config/pageRoutes';
 import { Button, Divider, Input, Link } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Icon } from '@iconify/react';
+import { signIn } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import React from 'react';
@@ -133,6 +134,7 @@ export default function LoginForm() {
           <Button
             startContent={<Icon icon="flat-color-icons:google" width={24} />}
             variant="bordered"
+            onClick={() => signIn('google', { callbackUrl: PAGE_ROUTES.HOME })}
           >
             {t('signInWithGoogle')}
           </Button>
@@ -141,6 +143,7 @@ export default function LoginForm() {
               <Icon className="text-default-500" icon="fe:github" width={24} />
             }
             variant="bordered"
+            onClick={() => signIn('github', { callbackUrl: PAGE_ROUTES.HOME })}
           >
             {t('signInWithGithub')}
           </Button>

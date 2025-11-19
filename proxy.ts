@@ -19,3 +19,5 @@ export function proxy(request: NextRequest) {
 
   return NextResponse.next();
 }
+
+export { auth as middleware } from '@/auth';

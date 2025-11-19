@@ -1,22 +1,15 @@
+import type { UserType } from '@/types/user.type.ts';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type AuthUser = {
-  id: string;
-  email: string;
-  name: string | null;
-  role: string;
-  avatar?: string | null;
-};
-
 type AuthState = {
-  user: AuthUser | null;
+  user: UserType | null;
   token: string | null;
   isAuthenticated: boolean;
-  setUser: (user: AuthUser | null) => void;
+  setUser: (user: UserType | null) => void;
   setToken: (token: string | null) => void;
   setSession: (session: {
-    user?: AuthUser | null;
+    user?: UserType | null;
     token?: string | null;
   }) => void;
   clear: () => void;
