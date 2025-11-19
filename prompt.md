@@ -433,16 +433,16 @@ After setup, test with these steps:
 
    ```bash
    # Create a user via API
-   curl -X POST http://localhost:3000/api/users \
+   curl -X POST http://localhost:4000/api/users \
      -H "Content-Type: application/json" \
      -d '{"email":"test@example.com","name":"Test User"}'
 
    # Get all users
-   curl http://localhost:3000/api/users
+   curl http://localhost:4000/api/users
    ```
 
 4. **View in browser**:
-   Open `localhost:3000` to see users displayed on the homepage.
+   Open `localhost:4000` to see users displayed on the homepage.
 
 ## AI MODEL RESPONSE TEMPLATE
 
