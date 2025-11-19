@@ -13,6 +13,7 @@
     "fix": "eslint . --fix"
   },
   "dependencies": {
+    "@heroui/breadcrumbs": "^2.2.22",
     "@heroui/button": "^2.2.27",
     "@heroui/dropdown": "^2.3.27",
     "@heroui/input": "^2.4.28",
@@ -22,6 +23,7 @@
     "@heroui/react": "^2.8.5",
     "@heroui/switch": "^2.2.24",
     "@heroui/system": "^2.4.23",
+    "@heroui/table": "^2.2.27",
     "@heroui/theme": "^2.4.23",
     "@heroui/toast": "^2.0.17",
     "@heroui/use-theme": "^2.1.10",

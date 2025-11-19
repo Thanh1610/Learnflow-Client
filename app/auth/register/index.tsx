@@ -1,12 +1,12 @@
 'use client';
 
-import { AcmeLogo } from '@/app/components/atoms/AcmeLogo';
-import { useRegisterApi } from '@/app/hooks/useRegisterApi';
 import {
   createRegisterSchema,
   type RegisterFormResult,
   type RegisterFormValues,
-} from '@/app/register/schema';
+} from '@/app/auth/register/schema';
+import { AcmeLogo } from '@/app/components/atoms/AcmeLogo';
+import { useRegisterApi } from '@/app/hooks/useRegisterApi';
 import { PAGE_ROUTES } from '@/config/pageRoutes';
 import { Button, Checkbox, Input, Link } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';

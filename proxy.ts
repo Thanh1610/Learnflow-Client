@@ -1,8 +1,8 @@
+import { PAGE_ROUTES } from '@/config/pageRoutes';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { PAGE_ROUTES } from './config/pageRoutes';
 
-const publicRoutes = ['/login', '/register'];
+const publicRoutes: string[] = [PAGE_ROUTES.LOGIN, PAGE_ROUTES.REGISTER];
 const publicPrefixes = ['/_next', '/static', '/favicon.ico', '/api/auth'];
 
 export function proxy(request: NextRequest) {
