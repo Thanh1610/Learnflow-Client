@@ -27,7 +27,7 @@ export const metaObject = (
     openGraph: openGraph ?? {
       title: composedTitle,
       description,
-      url: 'http://localhost:3001',
+      url: 'http://localhost:4001',
       siteName: siteConfig.title,
       locale: 'en_US',
       type: 'website',
