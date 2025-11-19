@@ -1,0 +1,85 @@
+{
+  "HomePage": {
+    "title": "Welcome to Learnflow Admin!"
+  },
+  "app": {
+    "language": "Change language"
+  },
+  "sidebar": {
+    "home": "Home",
+    "courses": "Courses",
+    "management": "Management",
+    "analytics": "Analytics",
+    "users": "Users",
+    "questions": "Questions",
+    "settings": {
+      "heading": "Settings",
+      "theme": "Theme",
+      "language": "Language"
+    },
+    "footer": {
+      "profile": "Profile",
+      "settings": "Settings",
+      "logout": "Logout"
+    }
+  },
+  "Auth": {
+    "login": {
+      "title": "Welcome Back",
+      "description": "Log in to your account to continue",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "forgotPassword": "Forgot Password",
+      "login": "Login",
+      "signUp": "Sign Up",
+      "or": "OR",
+      "signInWithGoogle": "Sign in with Google",
+      "signInWithGithub": "Sign in with Github",
+      "needAnAccount": "Need to create an account?",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "passwordRequired": "Password is required",
+      "passwordMin": "Password must be at least 8 characters",
+      "loginSuccess": "Login success",
+      "loginFailed": "Login failed",
+      "accessDenied": "Access denied"
+    },
+    "register": {
+      "title": "Welcome to Learnflow Admin!",
+      "description": "Register to continue",
+      "username": "Username",
+      "usernamePlaceholder": "Enter your username",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Enter your password again",
+      "signUp": "Sign Up",
+      "or": "OR",
+      "signInWithGoogle": "Sign in with Google",
+      "signInWithGithub": "Sign in with Github",
+      "needAnAccount": "Need to create an account?",
+      "agreeWithTerms": "I agree with the",
+      "terms": "Terms",
+      "privacyPolicy": "Privacy Policy",
+      "signUpWithGoogle": "Sign Up with Google",
+      "signUpWithGithub": "Sign Up with Github",
+      "alreadyHaveAccount": "Already have an account?",
+      "and": "and",
+      "registerSuccess": "Register success",
+      "registerFailed": "Register failed",
+      "logIn": "Log In",
+      "usernameRequired": "Username is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "passwordRequired": "Password is required",
+      "passwordMin": "Password must be at least 8 characters",
+      "confirmPasswordRequired": "Please confirm your password",
+      "confirmPasswordMismatch": "Passwords do not match",
+      "termsRequired": "You must agree to the terms"
+    }
+  }
+}

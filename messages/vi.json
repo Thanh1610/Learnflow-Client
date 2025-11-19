@@ -1,0 +1,85 @@
+{
+  "HomePage": {
+    "title": "Chào mừng bạn đến với Learnflow Admin!"
+  },
+  "app": {
+    "language": "Đổi ngôn ngữ"
+  },
+  "sidebar": {
+    "home": "Trang chủ",
+    "courses": "Danh sách khóa học",
+    "management": "Quản lý",
+    "analytics": "Analytics",
+    "users": "Người dùng",
+    "questions": "Câu hỏi",
+    "settings": {
+      "heading": "Cài đặt",
+      "theme": "Giao diện",
+      "language": "Ngôn ngữ"
+    },
+    "footer": {
+      "profile": "Trang cá nhân",
+      "settings": "Cài đặt",
+      "logout": "Đăng xuất"
+    }
+  },
+  "Auth": {
+    "login": {
+      "title": "Chào mừng bạn đến với Learnflow Admin!",
+      "description": "Đăng nhập để tiếp tục",
+      "email": "Email",
+      "emailPlaceholder": "Nhập email",
+      "password": "Mật khẩu",
+      "passwordPlaceholder": "Nhập mật khẩu",
+      "forgotPassword": "Quên mật khẩu?",
+      "login": "Đăng nhập",
+      "signUp": "Đăng ký",
+      "or": "HOẶC",
+      "signInWithGoogle": "Đăng nhập với Google",
+      "signInWithGithub": "Đăng nhập với Github",
+      "needAnAccount": "Cần tạo tài khoản?",
+      "emailRequired": "Email là bắt buộc",
+      "emailInvalid": "Vui lòng nhập email hợp lệ",
+      "passwordRequired": "Mật khẩu là bắt buộc",
+      "passwordMin": "Mật khẩu phải có ít nhất 8 ký tự",
+      "loginSuccess": "Đăng nhập thành công",
+      "loginFailed": "Đăng nhập thất bại",
+      "accessDenied": "Tài khoản không có quyền truy cập"
+    },
+    "register": {
+      "title": "Chào mừng bạn đến với Learnflow Admin!",
+      "description": "Đăng ký để tiếp tục",
+      "username": "Tên người dùng",
+      "usernamePlaceholder": "Nhập tên người dùng",
+      "email": "Email",
+      "emailPlaceholder": "Nhập email",
+      "password": "Mật khẩu",
+      "passwordPlaceholder": "Nhập mật khẩu",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+      "signUp": "Đăng ký",
+      "or": "HOẶC",
+      "signInWithGoogle": "Đăng nhập với Google",
+      "signInWithGithub": "Đăng nhập với Github",
+      "needAnAccount": "Cần tạo tài khoản?",
+      "agreeWithTerms": "Tôi đồng ý với",
+      "terms": "Điều khoản",
+      "privacyPolicy": "Quyền riêng tư",
+      "signUpWithGoogle": "Đăng ký với Google",
+      "signUpWithGithub": "Đăng ký với Github",
+      "alreadyHaveAccount": "Đã có tài khoản?",
+      "and": "và",
+      "registerSuccess": "Đăng ký thành công",
+      "registerFailed": "Đăng ký thất bại",
+      "logIn": "Đăng nhập",
+      "usernameRequired": "Tên người dùng là bắt buộc",
+      "emailRequired": "Email là bắt buộc",
+      "emailInvalid": "Vui lòng nhập email hợp lệ",
+      "passwordRequired": "Mật khẩu là bắt buộc",
+      "passwordMin": "Mật khẩu phải có ít nhất 8 ký tự",
+      "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
+      "confirmPasswordMismatch": "Mật khẩu không khớp",
+      "termsRequired": "Bạn phải đồng ý với điều khoản"
+    }
+  }
+}

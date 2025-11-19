@@ -1,0 +1,38 @@
+.loader {
+  width: fit-content;
+  font-weight: bold;
+  font-family: monospace;
+  font-size: 30px;
+  background: radial-gradient(circle closest-side, var(--loader-dark, #000) 94%, #0000)
+    right / calc(200% - 1em) 100%;
+  animation: l24 1s infinite alternate linear;
+}
+
+.loader::before {
+  content: 'Loading...';
+  line-height: 1em;
+  color: transparent;
+  background: inherit;
+  background-image: radial-gradient(
+    circle closest-side,
+    var(--loader-light, #fff) 94%,
+    var(--loader-dark, #000)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@keyframes l24 {
+  100% {
+    background-position: left;
+  }
+}
+
+/* === DARK MODE === */
+@media (prefers-color-scheme: dark) {
+  .loader {
+    --loader-dark: #956ad6; /* tím sáng hơn, nổi bật */
+    --loader-light: #ffffff; /* trắng để giữ độ sáng */
+    text-shadow: 0 0 12px rgba(149, 106, 214, 0.6); /* ánh sáng tím nhẹ */
+  }
+}
