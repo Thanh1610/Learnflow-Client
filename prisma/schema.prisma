@@ -39,7 +39,6 @@ model Department {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
   users       User[]    @relation("UserDepartments")
-  userIds     Int[]     @default([])
 }
 
 enum Gender {
