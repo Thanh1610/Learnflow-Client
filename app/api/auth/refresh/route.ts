@@ -1,6 +1,6 @@
-import prisma from '@/lib/prisma';
+import { hasuraPost } from '@/lib/hasura';
+import { signToken } from '@/lib/jwt';
 import { randomBytes } from 'crypto';
-import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -19,68 +19,109 @@ export async function POST() {
       );
     }
 
-    // Tìm user với refresh token hợp lệ
-    const user = await prisma.user.findFirst({
-      where: {
-        refreshToken,
-        refreshTokenExpiresAt: {
-          gt: new Date(),
-        },
-      },
-    });
+    // Tìm user với client refresh token hợp lệ (chưa hết hạn và chưa bị xóa)
+    const escapedRefreshToken = JSON.stringify(refreshToken);
+    const now = new Date().toISOString();
+    const escapedNow = JSON.stringify(now);
 
-    if (!user) {
+    const findUserQuery = `
+      query FindUserByClientRefreshToken {
+        user(
+          where: {
+            _and: [
+              { clientRefreshToken: { _eq: ${escapedRefreshToken} } }
+              { clientRefreshTokenExpiresAt: { _gt: ${escapedNow} } }
+              { deletedAt: { _is_null: true } }
+            ]
+          }
+        ) {
+          id
+          email
+          name
+          role
+        }
+      }
+    `;
+
+    const userResult = await hasuraPost<{
+      user: Array<{
+        id: number;
+        email: string;
+        name: string | null;
+        role: string;
+      }>;
+    }>(findUserQuery);
+
+    if (!userResult.user || userResult.user.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Invalid or expired refresh token' },
         { status: 401 }
       );
     }
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      console.error('JWT_SECRET is not configured');
-      return NextResponse.json(
-        { success: false, error: 'Server configuration error' },
-        { status: 500 }
-      );
-    }
+    const user = userResult.user[0];
 
     // Tạo access token mới
-    const token = jwt.sign(
+    const newAccessToken = signToken(
       {
         sub: user.id,
         email: user.email,
         role: user.role,
       },
-      secret,
-      { expiresIn: ACCESS_TOKEN_MAX_AGE_SECONDS }
+      ACCESS_TOKEN_MAX_AGE_SECONDS
     );
 
-    // Tạo refresh token mới (rotate refresh token)
-    const newRefreshToken = randomBytes(48).toString('hex');
-    const newRefreshTokenExpiresAt = new Date(
+    // Tạo client refresh token mới
+    const newClientRefreshToken = randomBytes(48).toString('hex');
+    const newClientRefreshTokenExpiresAt = new Date(
       Date.now() + REFRESH_TOKEN_MAX_AGE_SECONDS * 1000
-    );
+    ).toISOString();
 
-    // Cập nhật refresh token mới vào database
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        refreshToken: newRefreshToken,
-        refreshTokenExpiresAt: newRefreshTokenExpiresAt,
-      },
-    });
+    // Cập nhật client refresh token mới vào database
+    const escapedNewRefreshToken = JSON.stringify(newClientRefreshToken);
+    const escapedNewExpiresAt = JSON.stringify(newClientRefreshTokenExpiresAt);
+    const updateUserMutation = `
+      mutation UpdateUserClientRefreshToken {
+        updateUserById(
+          keyId: ${user.id}
+          updateColumns: {
+            clientRefreshToken: { set: ${escapedNewRefreshToken} }
+            clientRefreshTokenExpiresAt: { set: ${escapedNewExpiresAt} }
+          }
+        ) {
+          returning {
+            id
+          }
+        }
+      }
+    `;
+
+    try {
+      await hasuraPost(updateUserMutation);
+    } catch (updateError) {
+      console.error('Failed to update client refresh token:', updateError);
+      // Continue even if update fails - new tokens are still generated
+    }
+
+    // Exclude sensitive fields from user object
+    const publicUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
 
     const response = NextResponse.json(
       {
         success: true,
-        token,
+        data: publicUser,
+        token: newAccessToken,
       },
       { status: 200 }
     );
 
-    // Set cookies mới
-    response.cookies.set('client_token', token, {
+    // Set new cookies
+    response.cookies.set('client_token', newAccessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -88,7 +129,7 @@ export async function POST() {
       maxAge: ACCESS_TOKEN_MAX_AGE_SECONDS,
     });
 
-    response.cookies.set('client_refresh_token', newRefreshToken, {
+    response.cookies.set('client_refresh_token', newClientRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -99,8 +140,21 @@ export async function POST() {
     return response;
   } catch (error) {
     console.error('Error refreshing token:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     return NextResponse.json(
-      { success: false, error: 'Failed to refresh token' },
+      {
+        success: false,
+        error: 'Failed to refresh token',
+        details:
+          process.env.NODE_ENV === 'development'
+            ? error instanceof Error
+              ? error.message
+              : undefined
+            : undefined,
+      },
       { status: 500 }
     );
   }

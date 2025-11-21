@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { hasuraPost } from '@/lib/hasura';
 import { randomBytes } from 'crypto';
 import jwt from 'jsonwebtoken';
 
@@ -41,13 +41,33 @@ export async function issueTokensForUser(
     Date.now() + REFRESH_TOKEN_MAX_AGE_SECONDS * 1000
   );
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      clientRefreshToken,
-      clientRefreshTokenExpiresAt,
-    },
-  });
+  // Lưu client refresh token vào database
+  const escapedRefreshToken = JSON.stringify(clientRefreshToken);
+  const escapedExpiresAt = JSON.stringify(
+    clientRefreshTokenExpiresAt.toISOString()
+  );
+  const updateUserMutation = `
+    mutation UpdateUserClientRefreshToken {
+      updateUserById(
+        keyId: ${user.id}
+        updateColumns: {
+          clientRefreshToken: { set: ${escapedRefreshToken} }
+          clientRefreshTokenExpiresAt: { set: ${escapedExpiresAt} }
+        }
+      ) {
+        returning {
+          id
+        }
+      }
+    }
+  `;
+
+  try {
+    await hasuraPost(updateUserMutation);
+  } catch (updateError) {
+    console.error('Failed to update refresh token:', updateError);
+    throw new Error('Failed to save refresh token to database');
+  }
 
   return { token, clientRefreshToken, clientRefreshTokenExpiresAt };
 }

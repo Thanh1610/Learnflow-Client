@@ -1,10 +1,9 @@
-import { Provider as UserProvider } from '@/app/generated/prisma/enums';
 import {
   applyAuthCookies,
   clearAuthCookies,
   issueTokensForUser,
 } from '@/lib/auth-tokens';
-import prisma from '@/lib/prisma';
+import { hasuraPost } from '@/lib/hasura';
 import type { Account, User as NextAuthUser } from 'next-auth';
 import NextAuth from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
@@ -17,72 +16,299 @@ type TokenWithMeta = JWT & {
   avatar?: string | null;
 };
 
+const GENERAL_DEPARTMENT_NAME = 'General Department';
+
 async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
   if (!user.email || !account) {
     return;
   }
 
-  const providerType =
-    account.provider === 'google'
-      ? UserProvider.GOOGLE
-      : account.provider === 'github'
-        ? UserProvider.GITHUB
-        : null;
+  const emailString = String(user.email).trim().toLowerCase();
+  const escapedEmail = JSON.stringify(emailString);
+  const provider = account.provider === 'google' ? 'GOOGLE' : 'GITHUB';
+  const googleId =
+    account.provider === 'google' ? account.providerAccountId : null;
+  const githubId =
+    account.provider === 'github' ? account.providerAccountId : null;
 
-  if (!providerType) {
-    return;
-  }
-
-  const existingUser = await prisma.user.findUnique({
-    where: { email: user.email },
-  });
-
-  if (existingUser) {
-    const updates: Record<string, unknown> = {};
-
-    if (account.provider === 'google' && !existingUser.googleId) {
-      updates.googleId = account.providerAccountId;
+  try {
+    // 1. Kiểm tra user đã tồn tại chưa (theo email hoặc googleId/githubId tùy provider)
+    let findUserQuery = '';
+    if (googleId) {
+      const escapedGoogleId = JSON.stringify(googleId);
+      findUserQuery = `
+        query FindUserForSocialLogin {
+          user(where: { _and: [
+            { _or: [
+              { email: { _eq: ${escapedEmail} } },
+              { googleId: { _eq: ${escapedGoogleId} } }
+            ] },
+            { deletedAt: { _is_null: true } }
+          ] }) {
+            id
+            email
+            name
+            role
+            provider
+            googleId
+            githubId
+          }
+        }
+      `;
+    } else if (githubId) {
+      const escapedGithubId = JSON.stringify(githubId);
+      findUserQuery = `
+        query FindUserForSocialLogin {
+          user(where: { _and: [
+            { _or: [
+              { email: { _eq: ${escapedEmail} } },
+              { githubId: { _eq: ${escapedGithubId} } }
+            ] },
+            { deletedAt: { _is_null: true } }
+          ] }) {
+            id
+            email
+            name
+            role
+            provider
+            googleId
+            githubId
+          }
+        }
+      `;
+    } else {
+      findUserQuery = `
+        query FindUserForSocialLogin {
+          user(where: { _and: [
+            { email: { _eq: ${escapedEmail} } },
+            { deletedAt: { _is_null: true } }
+          ] }) {
+            id
+            email
+            name
+            role
+            provider
+            googleId
+            githubId
+          }
+        }
+      `;
     }
 
-    if (account.provider === 'github' && !existingUser.githubId) {
-      updates.githubId = account.providerAccountId;
-    }
+    const userResult = await hasuraPost<{
+      user: Array<{
+        id: number;
+        email: string;
+        name: string | null;
+        role: string;
+        provider: string;
+        googleId: string | null;
+        githubId: string | null;
+      }>;
+    }>(findUserQuery);
 
-    if (user.name && user.name !== existingUser.name) {
-      updates.name = user.name;
-    }
+    let existingUser =
+      userResult.user && userResult.user.length > 0 ? userResult.user[0] : null;
 
-    if (!existingUser.avatar && user.image) {
-      updates.avatar = user.image;
-    }
+    // 2. Nếu user chưa tồn tại, tạo user mới
+    if (!existingUser) {
+      // Tìm hoặc tạo General Department
+      const findDepartmentQuery = `
+        query FindDepartment {
+          department(where: { _and: [{ name: { _eq: ${JSON.stringify(GENERAL_DEPARTMENT_NAME)} } }, { deletedAt: { _is_null: true } }] }) {
+            id
+          }
+        }
+      `;
 
-    if (existingUser.provider !== providerType) {
-      updates.provider = providerType;
-    }
+      const departmentResult = await hasuraPost<{
+        department: Array<{ id: number }>;
+      }>(findDepartmentQuery);
 
-    if (Object.keys(updates).length > 0) {
-      await prisma.user.update({
-        where: { id: existingUser.id },
-        data: updates,
+      let departmentId: number;
+
+      if (
+        departmentResult.department &&
+        departmentResult.department.length > 0
+      ) {
+        departmentId = departmentResult.department[0].id;
+      } else {
+        // Tạo General Department nếu chưa có
+        const now = new Date().toISOString();
+        const createDepartmentMutation = `
+          mutation CreateDepartment {
+            insertDepartment(objects: [{ name: ${JSON.stringify(GENERAL_DEPARTMENT_NAME)}, updatedAt: ${JSON.stringify(now)} }]) {
+              returning {
+                id
+              }
+            }
+          }
+        `;
+
+        const createDeptResult = await hasuraPost<{
+          insertDepartment: { returning: Array<{ id: number }> };
+        }>(createDepartmentMutation);
+
+        if (
+          !createDeptResult.insertDepartment.returning ||
+          createDeptResult.insertDepartment.returning.length === 0
+        ) {
+          throw new Error('Failed to create General Department');
+        }
+
+        departmentId = createDeptResult.insertDepartment.returning[0].id;
+      }
+
+      // Tạo user mới
+      const now = new Date().toISOString();
+      const userObject: Record<string, unknown> = {
+        email: emailString,
+        role: 'USER',
+        provider,
+        updatedAt: now,
+      };
+
+      if (user.name) {
+        userObject.name = user.name;
+      }
+
+      if (googleId) {
+        userObject.googleId = googleId;
+      }
+
+      if (githubId) {
+        userObject.githubId = githubId;
+      }
+
+      const createUserMutation = `
+        mutation CreateUser($objects: [InsertUserObjectInput!]!) {
+          insertUser(objects: $objects) {
+            returning {
+              id
+              email
+              name
+              role
+            }
+          }
+        }
+      `;
+
+      const createUserResult = await hasuraPost<{
+        insertUser: {
+          returning: Array<{
+            id: number;
+            email: string;
+            name: string | null;
+            role: string;
+          }>;
+        };
+      }>(createUserMutation, {
+        objects: [userObject],
       });
+
+      if (
+        !createUserResult.insertUser.returning ||
+        createUserResult.insertUser.returning.length === 0
+      ) {
+        throw new Error('Failed to create user');
+      }
+
+      const newUser = createUserResult.insertUser.returning[0];
+      const userId = newUser.id;
+
+      // Link user vào General Department
+      try {
+        const linkUserDepartmentMutation = `
+          mutation LinkUserDepartment($objects: [InsertUserDepartmentsObjectInput!]!) {
+            insertUserDepartments(objects: $objects) {
+              returning {
+                a
+                b
+              }
+            }
+          }
+        `;
+
+        await hasuraPost(linkUserDepartmentMutation, {
+          objects: [{ a: userId, b: departmentId }],
+        });
+      } catch (linkError) {
+        console.error('Failed to link user to department:', linkError);
+        // Continue even if linking fails - user is already created
+      }
+
+      existingUser = {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role,
+        provider,
+        googleId,
+        githubId,
+      };
+    } else {
+      // 3. Nếu user đã tồn tại nhưng chưa có googleId/githubId, cập nhật
+      const needsUpdate =
+        (googleId && !existingUser.googleId) ||
+        (githubId && !existingUser.githubId);
+
+      if (needsUpdate) {
+        const escapedProvider = JSON.stringify(provider);
+        const now = new Date().toISOString();
+        const escapedUpdatedAt = JSON.stringify(now);
+        const updateColumns: Record<string, { set: string }> = {
+          provider: { set: escapedProvider },
+          updatedAt: { set: escapedUpdatedAt },
+        };
+
+        if (googleId && !existingUser.googleId) {
+          updateColumns.googleId = { set: JSON.stringify(googleId) };
+        }
+
+        if (githubId && !existingUser.githubId) {
+          updateColumns.githubId = { set: JSON.stringify(githubId) };
+        }
+
+        const updateColumnsString = Object.entries(updateColumns)
+          .map(([key, value]) => `${key}: { set: ${value.set} }`)
+          .join('\n                ');
+
+        const updateUserMutation = `
+          mutation UpdateUserSocialId {
+            updateUserById(
+              keyId: ${existingUser.id}
+              updateColumns: {
+                ${updateColumnsString}
+              }
+            ) {
+              returning {
+                id
+              }
+            }
+          }
+        `;
+
+        try {
+          await hasuraPost(updateUserMutation);
+          if (googleId) {
+            existingUser.googleId = googleId;
+          }
+          if (githubId) {
+            existingUser.githubId = githubId;
+          }
+          existingUser.provider = provider;
+        } catch (updateError) {
+          console.error('Failed to update user social ID:', updateError);
+          // Continue even if update fails
+        }
+      }
     }
 
-    return;
+    return existingUser;
+  } catch (error) {
+    console.error('Error ensuring user record:', error);
+    throw error;
   }
-
-  await prisma.user.create({
-    data: {
-      email: user.email,
-      name: user.name,
-      avatar: user.image,
-      provider: providerType,
-      ...(account.provider === 'google'
-        ? { googleId: account.providerAccountId }
-        : account.provider === 'github'
-          ? { githubId: account.providerAccountId }
-          : {}),
-    },
-  });
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -102,27 +328,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   events: {
     async signIn({ user, account }) {
       try {
-        await ensureUserRecord(user, account);
-
-        if (!user.email) {
-          return;
+        const dbUser = await ensureUserRecord(user, account);
+        if (dbUser) {
+          // Tạo và lưu tokens vào database
+          try {
+            const tokens = await issueTokensForUser({
+              id: dbUser.id,
+              email: dbUser.email,
+              role: dbUser.role,
+            });
+            // Set cookies ngay sau khi tạo tokens
+            const cookieStore = await cookies();
+            applyAuthCookies(
+              cookieStore,
+              tokens.token,
+              tokens.clientRefreshToken
+            );
+          } catch (tokenError) {
+            console.error('Failed to issue tokens:', tokenError);
+            // Continue even if token generation fails
+          }
         }
-
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email },
-          select: {
-            id: true,
-            email: true,
-            role: true,
-          },
-        });
-
-        if (!dbUser) {
-          return;
-        }
-
-        const { token, clientRefreshToken } = await issueTokensForUser(dbUser);
-        applyAuthCookies(await cookies(), token, clientRefreshToken);
       } catch (error) {
         console.error('Cannot save OAuth user information:', error);
       }
@@ -132,26 +358,84 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   callbacks: {
-    async jwt({ token }) {
+    async jwt({ token, user, trigger }) {
       const enrichedToken = token as TokenWithMeta;
 
-      if (!enrichedToken.email) {
-        return enrichedToken;
+      // Khi sign in lần đầu, user object có sẵn
+      if (user && user.email) {
+        // Lấy thông tin user từ database
+        const emailString = String(user.email).trim().toLowerCase();
+        const escapedEmail = JSON.stringify(emailString);
+        const findUserQuery = `
+          query FindUserForJWT {
+            user(where: { _and: [{ email: { _eq: ${escapedEmail} } }, { deletedAt: { _is_null: true } }] }) {
+              id
+              email
+              name
+              role
+            }
+          }
+        `;
+
+        try {
+          const userResult = await hasuraPost<{
+            user: Array<{
+              id: number;
+              email: string;
+              name: string | null;
+              role: string;
+            }>;
+          }>(findUserQuery);
+
+          if (userResult.user && userResult.user.length > 0) {
+            const dbUser = userResult.user[0];
+            enrichedToken.sub = String(dbUser.id);
+            enrichedToken.email = dbUser.email;
+            enrichedToken.role = dbUser.role;
+            if (dbUser.name) {
+              enrichedToken.name = dbUser.name;
+            }
+            if (user.image) {
+              enrichedToken.avatar = user.image;
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user in JWT callback:', error);
+        }
       }
 
-      const dbUser = await prisma.user.findUnique({
-        where: { email: enrichedToken.email },
-        select: {
-          id: true,
-          role: true,
-          avatar: true,
-        },
-      });
+      // Nếu đã có sub (user id) nhưng chưa có role, fetch lại từ database
+      if (enrichedToken.sub && !enrichedToken.role && enrichedToken.email) {
+        const escapedEmail = JSON.stringify(enrichedToken.email);
+        const findUserQuery = `
+          query FindUserForJWT {
+            user(where: { _and: [{ email: { _eq: ${escapedEmail} } }, { deletedAt: { _is_null: true } }] }) {
+              id
+              role
+              name
+            }
+          }
+        `;
 
-      if (dbUser) {
-        enrichedToken.sub = String(dbUser.id);
-        enrichedToken.role = dbUser.role;
-        enrichedToken.avatar = dbUser.avatar;
+        try {
+          const userResult = await hasuraPost<{
+            user: Array<{
+              id: number;
+              role: string;
+              name: string | null;
+            }>;
+          }>(findUserQuery);
+
+          if (userResult.user && userResult.user.length > 0) {
+            const dbUser = userResult.user[0];
+            enrichedToken.role = dbUser.role;
+            if (dbUser.name) {
+              enrichedToken.name = dbUser.name;
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user role in JWT callback:', error);
+        }
       }
 
       return enrichedToken;

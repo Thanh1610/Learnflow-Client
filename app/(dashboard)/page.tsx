@@ -1,6 +1,6 @@
 import { HomeSessionHydrator } from '@/app/components/HomeSessionHydrator';
 import { metaObject } from '@/config/site.config';
-import prisma from '@/lib/prisma';
+// TODO: Replace with Hasura implementation
 import { Button } from '@heroui/button';
 import { getTranslations } from 'next-intl/server';
 
@@ -19,16 +19,8 @@ export default async function Home() {
 
   let error: string | null = null;
 
-  try {
-    users = await prisma.user.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  } catch (e) {
-    console.error('Error fetching users:', e);
-    error = 'Failed to load users. Make sure your DATABASE_URL is configured.';
-  }
+  // TODO: Replace with Hasura implementation
+  error = 'Not implemented - Hasura integration needed';
 
   const t = await getTranslations('HomePage');
 

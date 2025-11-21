@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { hasuraPost } from '@/lib/hasura';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -7,17 +7,48 @@ export async function POST() {
     const cookieStore = await cookies();
     const refreshToken = cookieStore.get('client_refresh_token')?.value;
 
-    // Xóa refresh token trong database nếu có
+    // Clear client refresh token trong database nếu có
     if (refreshToken) {
-      await prisma.user.updateMany({
-        where: {
-          refreshToken,
-        },
-        data: {
-          refreshToken: null,
-          refreshTokenExpiresAt: null,
-        },
-      });
+      const escapedRefreshToken = JSON.stringify(refreshToken);
+
+      // Tìm user bằng clientRefreshToken trước
+      const findUserQuery = `
+        query FindUserByClientRefreshToken {
+          user(where: { clientRefreshToken: { _eq: ${escapedRefreshToken} } }) {
+            id
+          }
+        }
+      `;
+
+      try {
+        const userResult = await hasuraPost<{
+          user: Array<{ id: number }>;
+        }>(findUserQuery);
+
+        if (userResult.user && userResult.user.length > 0) {
+          const userId = userResult.user[0].id;
+          const clearRefreshTokenMutation = `
+            mutation ClearUserClientRefreshToken {
+              updateUserById(
+                keyId: ${userId}
+                updateColumns: {
+                  clientRefreshToken: { set: null }
+                  clientRefreshTokenExpiresAt: { set: null }
+                }
+              ) {
+                returning {
+                  id
+                }
+              }
+            }
+          `;
+
+          await hasuraPost(clearRefreshTokenMutation);
+        }
+      } catch (updateError) {
+        console.error('Failed to clear client refresh token:', updateError);
+        // Continue even if update fails - cookies will still be cleared
+      }
     }
 
     // Xóa cookies
@@ -48,8 +79,21 @@ export async function POST() {
     return response;
   } catch (error) {
     console.error('Error logging out:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     return NextResponse.json(
-      { success: false, error: 'Failed to logout' },
+      {
+        success: false,
+        error: 'Failed to logout',
+        details:
+          process.env.NODE_ENV === 'development'
+            ? error instanceof Error
+              ? error.message
+              : undefined
+            : undefined,
+      },
       { status: 500 }
     );
   }

@@ -1,12 +1,8 @@
-import prisma from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { hasuraPost } from '@/lib/hasura';
+import { verifyToken } from '@/lib/jwt';
+import type { UserType } from '@/types/user.type';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-
-type JwtPayload = {
-  sub?: string | number;
-  email?: string;
-};
 
 export async function GET() {
   try {
@@ -20,31 +16,16 @@ export async function GET() {
       );
     }
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      console.error('JWT_SECRET is not configured');
-      return NextResponse.json(
-        { success: false, error: 'Server configuration error' },
-        { status: 500 }
-      );
-    }
-
-    let payload: JwtPayload;
-    try {
-      payload = jwt.verify(token, secret) as JwtPayload;
-    } catch (error) {
-      console.error('Invalid token:', error);
+    // Verify token
+    const payload = verifyToken(token);
+    if (!payload) {
       return NextResponse.json(
         { success: false, error: 'Invalid session' },
         { status: 401 }
       );
     }
 
-    const userId =
-      typeof payload.sub === 'string'
-        ? Number.parseInt(payload.sub, 10)
-        : payload.sub;
-
+    const userId = payload.sub;
     if (!userId || Number.isNaN(userId)) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
@@ -52,36 +33,73 @@ export async function GET() {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    // Query user from Hasura
+    const escapedUserId = JSON.stringify(userId);
+    const findUserQuery = `
+      query GetUserById {
+        user(where: { _and: [{ id: { _eq: ${escapedUserId} } }, { deletedAt: { _is_null: true } }] }) {
+          id
+          email
+          name
+          role
+          avatar
+          address
+          phone
+          gender
+          provider
+          googleId
+          githubId
+          deletedAt
+        }
+      }
+    `;
 
-    if (!user) {
+    const userResult = await hasuraPost<{
+      user: Array<{
+        id: number;
+        email: string;
+        name: string | null;
+        role: string;
+        avatar: string | null;
+        address: string | null;
+        phone: string | null;
+        gender: string | null;
+        provider: string | null;
+        googleId: string | null;
+        githubId: string | null;
+        deletedAt: string | null;
+      }>;
+    }>(findUserQuery);
+
+    if (!userResult.user || userResult.user.length === 0) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
       );
     }
 
-    const {
-      password: _password,
-      refreshToken: _refreshToken,
-      refreshTokenExpiresAt: _refreshTokenExpiresAt,
-      clientRefreshToken: _clientRefreshToken,
-      clientRefreshTokenExpiresAt: _clientRefreshTokenExpiresAt,
-      deletedAt: _deletedAt,
-      ...safeUser
-    } = user;
+    const dbUser = userResult.user[0];
 
-    const publicUser = {
-      ...safeUser,
-      id: String(user.id),
+    // Map to UserType format (id should be string)
+    const user: UserType = {
+      id: String(dbUser.id),
+      email: dbUser.email,
+      name: dbUser.name,
+      role: dbUser.role,
+      avatar: dbUser.avatar,
+      address: dbUser.address,
+      phone: dbUser.phone,
+      gender: dbUser.gender,
+      provider: dbUser.provider,
+      googleId: dbUser.googleId,
+      githubId: dbUser.githubId,
+      deletedAt: dbUser.deletedAt ? new Date(dbUser.deletedAt) : null,
     };
 
     return NextResponse.json(
       {
         success: true,
-        data: publicUser,
+        data: user,
         token,
       },
       { status: 200 }

@@ -24,12 +24,15 @@ export function HomeSessionHydrator() {
         return;
       }
 
+      // Nếu API trả về success nhưng không có data, clear và redirect
       clear();
       router.replace(PAGE_ROUTES.LOGIN);
     },
     onUnauthorized: () => {
       clear();
-      router.replace(PAGE_ROUTES.LOGIN);
+    },
+    onError: error => {
+      console.error('Error fetching user session:', error);
     },
   });
 

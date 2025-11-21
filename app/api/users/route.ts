@@ -1,34 +1,18 @@
-import prisma from '@/lib/prisma';
+// TODO: Replace with Hasura implementation
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
-  try {
-    const users = await prisma.user.findMany();
-    return NextResponse.json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch users' },
-      { status: 500 }
-    );
-  }
+  // TODO: Replace with Hasura implementation
+  return NextResponse.json(
+    { error: 'Not implemented - Hasura integration needed' },
+    { status: 501 }
+  );
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const user = await prisma.user.create({
-      data: {
-        email: body.email,
-        name: body.name,
-      },
-    });
-    return NextResponse.json(user, { status: 201 });
-  } catch (error) {
-    console.error('Error creating user:', error);
-    return NextResponse.json(
-      { error: 'Failed to create user' },
-      { status: 500 }
-    );
-  }
+  // TODO: Replace with Hasura implementation
+  return NextResponse.json(
+    { error: 'Not implemented - Hasura integration needed' },
+    { status: 501 }
+  );
 }
