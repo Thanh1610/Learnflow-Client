@@ -1,6 +1,6 @@
 import { HomeSessionHydrator } from '@/app/components/HomeSessionHydrator';
 import { metaObject } from '@/config/site.config';
-import prisma from '@/lib/prisma';
+// TODO: Replace with Hasura implementation
 import { Button } from '@heroui/button';
 import { getTranslations } from 'next-intl/server';
 
@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 export default async function Home() {
-  let users: Array<{
+  const users: Array<{
     id: number;
     email: string;
     name: string | null;
@@ -19,16 +19,8 @@ export default async function Home() {
 
   let error: string | null = null;
 
-  try {
-    users = await prisma.user.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  } catch (e) {
-    console.error('Error fetching users:', e);
-    error = 'Failed to load users. Make sure your DATABASE_URL is configured.';
-  }
+  // TODO: Replace with Hasura implementation
+  error = 'Not implemented - Hasura integration needed';
 
   const t = await getTranslations('HomePage');
 
@@ -36,7 +28,7 @@ export default async function Home() {
     <>
       <HomeSessionHydrator />
       <div className="flex flex-col gap-10 p-8">
-        <section className="flex flex-wrap gap-4 items-center">
+        <section className="flex flex-wrap items-center gap-4">
           <Button color="primary" variant="solid" size="lg">
             {t('title')}
           </Button>
@@ -57,7 +49,7 @@ export default async function Home() {
           </Button>
           <Button
             disableRipple
-            className="relative overflow-visible rounded-full px-12 shadow-sm bg-background/30 hover:-translate-y-1 after:content-[''] after:absolute after:rounded-full after:inset-0 after:bg-background/40 after:z-[-1] after:transition after:duration-500 hover:after:scale-150 hover:after:opacity-0"
+            className="bg-background/30 after:bg-background/40 relative overflow-visible rounded-full px-12 shadow-sm after:absolute after:inset-0 after:z-[-1] after:rounded-full after:transition after:duration-500 after:content-[''] hover:-translate-y-1 hover:after:scale-150 hover:after:opacity-0"
             size="lg"
           >
             Press me
@@ -65,7 +57,7 @@ export default async function Home() {
         </section>
 
         <section>
-          <h1 className="text-2xl font-bold mb-4">Users from Database</h1>
+          <h1 className="mb-4 text-2xl font-bold">Users from Database</h1>
           {error ? (
             <p className="text-red-500">{error}</p>
           ) : users.length === 0 ? (
@@ -73,7 +65,7 @@ export default async function Home() {
           ) : (
             <ul className="space-y-2">
               {users.map(user => (
-                <li key={user.id} className="border p-4 rounded">
+                <li key={user.id} className="rounded border p-4">
                   <p className="font-semibold">{user.name || 'No name'}</p>
                   <p className="text-sm text-gray-600">{user.email}</p>
                 </li>

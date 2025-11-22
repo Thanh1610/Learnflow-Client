@@ -10,6 +10,12 @@ const defaultHeaders: HeadersInit = {
   Accept: 'application/json',
 };
 
+const VERCEL_URL = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : undefined;
+
+const SERVER_BASE_URL = VERCEL_URL ?? process.env.ADMIN_URL;
+
 const JSON_MIME = 'application/json';
 
 const isJsonContentType = (contentType?: string | null) =>
@@ -52,9 +58,24 @@ function buildFetchError(status: number, payload: unknown): FetchError {
   return error;
 }
 
-async function refreshAuthTokens() {
+function buildRefreshUrl() {
+  if (typeof window !== 'undefined') {
+    return '/api/auth/refresh';
+  }
+
   try {
-    const response = await fetch('/api/auth/refresh', {
+    return new URL('/api/auth/refresh', SERVER_BASE_URL).toString();
+  } catch (error) {
+    console.error('Failed to build refresh URL:', error);
+    return '/api/auth/refresh';
+  }
+}
+
+async function refreshAuthTokens() {
+  const refreshUrl = buildRefreshUrl();
+
+  try {
+    const response = await fetch(refreshUrl, {
       method: 'POST',
       credentials: 'include',
     });
