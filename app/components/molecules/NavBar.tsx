@@ -3,9 +3,11 @@ import { AcmeLogo } from '@/app/components/atoms/AcmeLogo';
 import { LanguageToggle } from '@/app/components/atoms/Language';
 import { useSidebar } from '@/app/components/organisms/Sidebar/SidebarContext';
 import { useIsMobile } from '@/app/components/organisms/Sidebar/useIsMobile';
+import { PAGE_ROUTES } from '@/config/pageRoutes';
 import { Button } from '@heroui/button';
 import { Navbar, NavbarBrand, NavbarContent, NavbarItem } from '@heroui/react';
 import { PanelLeftOpen } from 'lucide-react';
+import Link from 'next/link';
 
 interface NavBarProps {
   initialLocale: string;
@@ -28,15 +30,19 @@ export default function NavBar({ initialLocale }: NavBarProps) {
               onPress={toggle}
               aria-label="Toggle sidebar"
             >
-              <PanelLeftOpen className="w-5 h-5" />
+              <PanelLeftOpen className="h-5 w-5" />
             </Button>
           </NavbarItem>
         </NavbarContent>
       )}
 
       {/* Logo ở giữa (mobile) hoặc bên trái (desktop) */}
-      <NavbarBrand className={isMobile ? 'justify-center flex-1' : ''}>
-        <AcmeLogo className="w-8 h-8" />
+      <NavbarBrand
+        as={Link}
+        href={PAGE_ROUTES.HOME}
+        className={isMobile ? 'flex-1 justify-center' : ''}
+      >
+        <AcmeLogo className="h-8 w-8" />
         <p className="font-bold text-inherit">LearnFlow</p>
       </NavbarBrand>
 
