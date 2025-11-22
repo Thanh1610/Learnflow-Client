@@ -1,6 +1,12 @@
 'use client';
 
-import { createContext, ReactNode, useContext, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 interface SidebarContextType {
   isOpen: boolean;
@@ -13,11 +19,27 @@ interface SidebarContextType {
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
+const STORAGE_KEY = 'sidebar-state';
+
 export function SidebarProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : false;
+  });
   const [isMobile, setIsMobile] = useState(false);
 
-  const toggle = () => setIsOpen(prev => !prev);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(isOpen));
+    }
+  }, [isOpen]);
+
+  const handleSetIsMobile = (mobile: boolean) => {
+    setIsMobile(mobile);
+  };
+
+  const toggle = () => setIsOpen((prev: boolean) => !prev);
   const open = () => setIsOpen(true);
   const close = () => setIsOpen(false);
 
@@ -29,7 +51,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
         toggle,
         open,
         close,
-        setIsMobile,
+        setIsMobile: handleSetIsMobile,
       }}
     >
       {children}
