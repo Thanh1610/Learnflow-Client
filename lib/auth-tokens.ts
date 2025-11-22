@@ -1,4 +1,4 @@
-import { hasuraPost } from '@/lib/hasura';
+import { hasura } from '@/lib/hasura';
 import { randomBytes } from 'crypto';
 import jwt from 'jsonwebtoken';
 
@@ -63,7 +63,7 @@ export async function issueTokensForUser(
   `;
 
   try {
-    await hasuraPost(updateUserMutation);
+    await hasura(updateUserMutation);
   } catch (updateError) {
     console.error('Failed to update refresh token:', updateError);
     throw new Error('Failed to save refresh token to database');

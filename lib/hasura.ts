@@ -19,7 +19,7 @@ export function getHasuraHeaders(): HeadersInit {
   };
 }
 
-export async function hasuraPost<T = unknown>(
+export async function hasura<T = unknown>(
   query: string,
   variables?: Record<string, unknown>
 ): Promise<T> {
@@ -91,39 +91,4 @@ export async function hasuraPost<T = unknown>(
       }`
     );
   }
-}
-
-export async function hasuraGet<T = unknown>(
-  query: string,
-  variables?: Record<string, unknown>
-): Promise<T> {
-  const baseUrl = getHasuraUrl();
-  const params = new URLSearchParams({
-    query,
-    ...(variables &&
-      Object.keys(variables).length > 0 && {
-        variables: JSON.stringify(variables),
-      }),
-  });
-
-  const url = `${baseUrl}?${params.toString()}`;
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: { 'x-hasura-admin-secret': getHasuraAdminSecret() },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Hasura request failed: ${response.statusText}`);
-  }
-
-  const result = await response.json();
-
-  if (result.errors) {
-    const errorMessages = result.errors
-      .map((e: { message: string }) => e.message)
-      .join(', ');
-    throw new Error(`Hasura GraphQL errors: ${errorMessages}`);
-  }
-
-  return result.data as T;
 }

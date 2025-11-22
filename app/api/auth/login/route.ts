@@ -1,4 +1,4 @@
-import { hasuraPost } from '@/lib/hasura';
+import { hasura } from '@/lib/hasura';
 import { signToken } from '@/lib/jwt';
 import { compare } from 'bcryptjs';
 import { randomBytes } from 'crypto';
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     `;
 
     console.log('Step 1: Finding user by email:', emailString);
-    const userResult = await hasuraPost<{
+    const userResult = await hasura<{
       user: Array<{
         id: number;
         email: string;
@@ -121,7 +121,7 @@ export async function POST(req: Request) {
     `;
 
     try {
-      await hasuraPost(updateUserMutation);
+      await hasura(updateUserMutation);
     } catch (updateError) {
       console.error('Failed to update client refresh token:', updateError);
       // Continue even if update fails - token is still generated

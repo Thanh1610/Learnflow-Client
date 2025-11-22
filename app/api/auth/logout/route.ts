@@ -1,4 +1,4 @@
-import { hasuraPost } from '@/lib/hasura';
+import { hasura } from '@/lib/hasura';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -21,7 +21,7 @@ export async function POST() {
       `;
 
       try {
-        const userResult = await hasuraPost<{
+        const userResult = await hasura<{
           user: Array<{ id: number }>;
         }>(findUserQuery);
 
@@ -43,7 +43,7 @@ export async function POST() {
             }
           `;
 
-          await hasuraPost(clearRefreshTokenMutation);
+          await hasura(clearRefreshTokenMutation);
         }
       } catch (updateError) {
         console.error('Failed to clear client refresh token:', updateError);

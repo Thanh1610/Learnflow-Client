@@ -3,7 +3,7 @@ import {
   clearAuthCookies,
   issueTokensForUser,
 } from '@/lib/auth-tokens';
-import { hasuraPost } from '@/lib/hasura';
+import { hasura } from '@/lib/hasura';
 import type { Account, User as NextAuthUser } from 'next-auth';
 import NextAuth from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
@@ -95,7 +95,7 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
       `;
     }
 
-    const userResult = await hasuraPost<{
+    const userResult = await hasura<{
       user: Array<{
         id: number;
         email: string;
@@ -121,7 +121,7 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
         }
       `;
 
-      const departmentResult = await hasuraPost<{
+      const departmentResult = await hasura<{
         department: Array<{ id: number }>;
       }>(findDepartmentQuery);
 
@@ -145,7 +145,7 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
           }
         `;
 
-        const createDeptResult = await hasuraPost<{
+        const createDeptResult = await hasura<{
           insertDepartment: { returning: Array<{ id: number }> };
         }>(createDepartmentMutation);
 
@@ -193,7 +193,7 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
         }
       `;
 
-      const createUserResult = await hasuraPost<{
+      const createUserResult = await hasura<{
         insertUser: {
           returning: Array<{
             id: number;
@@ -229,7 +229,7 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
           }
         `;
 
-        await hasuraPost(linkUserDepartmentMutation, {
+        await hasura(linkUserDepartmentMutation, {
           objects: [{ a: userId, b: departmentId }],
         });
       } catch (linkError) {
@@ -289,7 +289,7 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
         `;
 
         try {
-          await hasuraPost(updateUserMutation);
+          await hasura(updateUserMutation);
           if (googleId) {
             existingUser.googleId = googleId;
           }
@@ -358,7 +358,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger: _trigger }) {
       const enrichedToken = token as TokenWithMeta;
 
       // Khi sign in lần đầu, user object có sẵn
@@ -378,7 +378,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         `;
 
         try {
-          const userResult = await hasuraPost<{
+          const userResult = await hasura<{
             user: Array<{
               id: number;
               email: string;
@@ -418,7 +418,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         `;
 
         try {
-          const userResult = await hasuraPost<{
+          const userResult = await hasura<{
             user: Array<{
               id: number;
               role: string;

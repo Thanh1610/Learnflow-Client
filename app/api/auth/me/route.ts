@@ -1,4 +1,4 @@
-import { hasuraPost } from '@/lib/hasura';
+import { hasura } from '@/lib/hasura';
 import { verifyToken } from '@/lib/jwt';
 import type { UserType } from '@/types/user.type';
 import { cookies } from 'next/headers';
@@ -54,7 +54,7 @@ export async function GET() {
       }
     `;
 
-    const userResult = await hasuraPost<{
+    const userResult = await hasura<{
       user: Array<{
         id: number;
         email: string;

@@ -1,4 +1,4 @@
-import { hasuraPost } from '@/lib/hasura';
+import { hasura } from '@/lib/hasura';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       }
     `;
 
-    const emailCheckResult = await hasuraPost<{
+    const emailCheckResult = await hasura<{
       user: Array<{ id: number }>;
     }>(checkEmailQuery, { email });
 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       }
     `;
 
-    const departmentResult = await hasuraPost<{
+    const departmentResult = await hasura<{
       department: Array<{ id: number }>;
     }>(findDepartmentQuery, { name: GENERAL_DEPARTMENT_NAME });
 
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
         }
       `;
 
-      const createDeptResult = await hasuraPost<{
+      const createDeptResult = await hasura<{
         insertDepartment: { returning: Array<{ id: number }> };
       }>(createDepartmentMutation, {
         objects: [{ name: GENERAL_DEPARTMENT_NAME, updatedAt: now }],
@@ -119,7 +119,7 @@ export async function POST(req: Request) {
     `;
 
     try {
-      const createUserResult = await hasuraPost<{
+      const createUserResult = await hasura<{
         insertUser: {
           returning: Array<{ id: number; email: string; name: string | null }>;
         };
@@ -150,7 +150,7 @@ export async function POST(req: Request) {
           }
         `;
 
-        await hasuraPost(linkUserDepartmentMutation, {
+        await hasura(linkUserDepartmentMutation, {
           objects: [{ a: userId, b: departmentId }],
         });
       } catch (linkError) {
