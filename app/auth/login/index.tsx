@@ -10,13 +10,13 @@ import { useRouter } from 'next/navigation';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 
-import { AcmeLogo } from '@/app/components/atoms/AcmeLogo';
-import { useLogin } from '@/app/hooks/useLogin';
 import {
   createLoginSchema,
   type LoginFormResult,
   type LoginFormValues,
-} from '@/app/login/schema';
+} from '@/app/auth/login/schema';
+import { AcmeLogo } from '@/app/components/atoms/AcmeLogo';
+import { useLogin } from '@/app/hooks/useLogin';
 import { useAuthStore } from '@/app/stores/useAuthStore';
 import toast from 'react-hot-toast';
 

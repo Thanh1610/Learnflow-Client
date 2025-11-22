@@ -1,1 +1,49 @@
-Luôn trả lời tiếng Việt.
+# Coding Rules for Learnflow-Admin
+
+## API Calls
+
+- **Ưu tiên sử dụng `fetcher` từ `@/lib/fetcher` thay vì `fetch` thuần**: Khi cần gọi API từ client-side, luôn sử dụng `fetcher` utility thay vì `fetch` trực tiếp. `fetcher` cung cấp các tính năng như:
+  - Tự động xử lý JSON serialization
+  - Xử lý authentication tokens và refresh tokens
+  - Error handling nhất quán
+  - Type safety tốt hơn
+
+- **Tạo custom hooks cho API calls**: Thay vì gọi API trực tiếp trong components, hãy tạo custom hooks để:
+  - Tái sử dụng logic
+  - Quản lý loading states và errors
+  - Sử dụng SWR/SWRMutation để cache và revalidate data
+
+- **Vị trí đặt hooks**:
+  - Tất cả hooks (bao gồm hooks gọi API từ client components): Đặt trong `app/hooks/`
+  - Hooks sử dụng `fetcher` để gọi API routes từ client-side đều đặt trực tiếp trong `app/hooks/`
+
+## Examples
+
+### ✅ Good - Sử dụng fetcher trong hook
+```typescript
+import { fetcher } from '@/lib/fetcher';
+import useSWRMutation from 'swr/mutation';
+
+export function useAddUsersToDepartment() {
+  const { trigger, isMutating, error } = useSWRMutation(
+    (key) => key,
+    async (_key, { arg }) => {
+      return fetcher('/api/department/add-users', {
+        method: 'POST',
+        body: arg,
+      });
+    }
+  );
+  // ...
+}
+```
+
+### ❌ Bad - Sử dụng fetch trực tiếp trong component
+```typescript
+const response = await fetch('/api/department/add-users', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data),
+});
+```
+

@@ -1,4 +1,4 @@
-import LoginForm from '@/app/login';
+import LoginForm from '@/app/auth/login';
 import { metaObject } from '@/config/site.config';
 export const metadata = {
   ...metaObject('Login'),
