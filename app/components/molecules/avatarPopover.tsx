@@ -20,6 +20,7 @@ import { Loader2, LogOut, SettingsIcon, User as UserIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
+
 export const UserCard = ({ user }: { user: UserType | null }) => {
   const defaultAvatar = '/image/default_avatar.jpg';
   const clear = useAuthStore(state => state.clear);
@@ -29,10 +30,7 @@ export const UserCard = ({ user }: { user: UserType | null }) => {
   const handleAction = (key: React.Key) => {
     switch (key) {
       case 'profile':
-        // TODO: Navigate to profile page
-        break;
-      case 'settings':
-        // TODO: Navigate to settings page
+        router.push(PAGE_ROUTES.PROFILE_PAGE);
         break;
       case 'logout':
         handleLogout();

@@ -76,5 +76,79 @@
       "confirmPasswordMismatch": "Passwords do not match",
       "termsRequired": "You must agree to the terms"
     }
+  },
+  "ProfilePage": {
+    "title": "Profile",
+    "description": "Manage your profile",
+    "home": "Home",
+    "profile": "Profile",
+    "saveProfile": "Save Profile",
+    "updateSuccess": "Profile updated successfully",
+    "updateFailed": "Failed to update profile",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Enter your name",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email",
+      "phone": "Phone",
+      "phonePlaceholder": "Enter your phone number",
+      "address": "Address",
+      "addressPlaceholder": "Enter your address",
+      "dateOfBirth": "Date of Birth",
+      "gender": "Gender",
+      "genderPlaceholder": "Select your gender",
+      "male": "Male",
+      "female": "Female",
+      "saveChanges": "Save Changes",
+      "changePassword": "Change Password",
+      "uploadSuccess": "Avatar uploaded successfully",
+      "uploadFailed": "Failed to upload avatar",
+      "uploading": "Uploading image...",
+      "compressing": "Compressing image...",
+      "compressionFailed": "Failed to compress image. Using original file.",
+      "selectImage": "Select Image",
+      "uploadInfo": {
+        "title": "Image Upload Requirements",
+        "maxSize": "Maximum size: 10MB",
+        "supportedFormats": "Supported formats: JPG, PNG, GIF, WebP",
+        "note": "Image will be automatically compressed to max 1MB before upload"
+      },
+      "updateImage": "Update Image",
+      "removeImage": "Remove Image",
+      "imageSelected": "Image selected",
+      "fileTooLarge": "File size too large (max 5MB)",
+      "invalidFileType": "Invalid file type. Please select an image file",
+      "validation": {
+        "nameRequired": "Name is required",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Please enter a valid email address"
+      }
+    }
+  },
+  "ChangePasswordPage": {
+    "title": "Change Password",
+    "description": "Change your account password",
+    "home": "Home",
+    "profile": "Profile",
+    "changePassword": "Change Password",
+    "changePasswordSuccess": "Password changed successfully",
+    "changePasswordFailed": "Failed to change password",
+    "form": {
+      "currentPassword": "Current Password",
+      "currentPasswordPlaceholder": "Enter your current password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Enter your new password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Re-enter your new password",
+      "saveChanges": "Save Changes",
+      "validation": {
+        "currentPasswordRequired": "Current password is required",
+        "newPasswordRequired": "New password is required",
+        "passwordMin": "Password must be at least 8 characters",
+        "confirmPasswordRequired": "Please confirm your password",
+        "passwordMismatch": "Passwords do not match",
+        "samePassword": "New password must be different from current password"
+      }
+    }
   }
 }
