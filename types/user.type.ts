@@ -12,4 +12,6 @@ export type UserType = {
   githubId?: string | null;
   deletedAt?: Date | null;
   dateOfBirth?: string | null;
+  oobCode?: string | null;
+  oobCodeExpiresAt?: string | null;
 };

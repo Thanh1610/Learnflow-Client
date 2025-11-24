@@ -1,7 +1,16 @@
 'use client';
 
+import {
+  createLoginSchema,
+  type LoginFormResult,
+  type LoginFormValues,
+} from '@/app/auth/login/schema';
+import { AcmeLogo } from '@/app/components/atoms/AcmeLogo';
+import ForgotPasswordModal from '@/app/components/molecules/ui/forgotPasswordModal';
+import { useLogin } from '@/app/hooks/useLogin';
+import { useAuthStore } from '@/app/stores/useAuthStore';
 import { PAGE_ROUTES } from '@/config/pageRoutes';
-import { Button, Divider, Input, Link } from '@heroui/react';
+import { Button, Divider, Input, Link, useDisclosure } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Icon } from '@iconify/react';
 import { signIn } from 'next-auth/react';
@@ -9,15 +18,6 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-
-import {
-  createLoginSchema,
-  type LoginFormResult,
-  type LoginFormValues,
-} from '@/app/auth/login/schema';
-import { AcmeLogo } from '@/app/components/atoms/AcmeLogo';
-import { useLogin } from '@/app/hooks/useLogin';
-import { useAuthStore } from '@/app/stores/useAuthStore';
 import toast from 'react-hot-toast';
 
 export default function LoginForm() {
@@ -27,6 +27,7 @@ export default function LoginForm() {
   const toggleVisibility = () => setIsVisible(!isVisible);
   const { login } = useLogin();
   const setSession = useAuthStore(state => state.setSession);
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const schema = React.useMemo(
     () =>
       createLoginSchema({
@@ -66,8 +67,12 @@ export default function LoginForm() {
       toast.error(t('loginFailed'));
     }
   });
+
+  const handleForgotPassword = () => {
+    onOpen();
+  };
   return (
-    <div className="flex h-full w-full items-center justify-center mt-[68px]">
+    <div className="mt-[68px] flex h-full w-full items-center justify-center">
       <div className="rounded-large flex w-full max-w-sm flex-col gap-4">
         <div className="flex flex-col items-center pb-6">
           <AcmeLogo />
@@ -112,9 +117,12 @@ export default function LoginForm() {
             {...register('password')}
           />
           <div className="flex w-full items-center justify-end px-1 py-2">
-            <Link className="text-default-500" href="#" size="sm">
+            <p
+              className="text-default-500 cursor-pointer text-sm"
+              onClick={handleForgotPassword}
+            >
               {t('forgotPassword')}
-            </Link>
+            </p>
           </div>
           <Button
             className="w-full"
@@ -155,6 +163,7 @@ export default function LoginForm() {
           </Link>
         </p>
       </div>
+      <ForgotPasswordModal isOpen={isOpen} onOpenChange={onOpenChange} />
     </div>
   );
 }
