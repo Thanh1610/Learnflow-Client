@@ -16,6 +16,7 @@ export type LoginResponse = {
     email: string;
     name: string | null;
     role: string;
+    avatar?: string | null;
   };
 };
 

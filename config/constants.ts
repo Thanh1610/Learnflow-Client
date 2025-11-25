@@ -10,3 +10,8 @@ export const LANGUAGES = [
     countryCode: 'VN',
   },
 ] as const;
+
+export const LANGUAGE_TYPE = {
+  VI: 'vi',
+  EN: 'en',
+};

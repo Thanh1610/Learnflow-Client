@@ -76,5 +76,119 @@
       "confirmPasswordMismatch": "Mật khẩu không khớp",
       "termsRequired": "Bạn phải đồng ý với điều khoản"
     }
+  },
+  "ProfilePage": {
+    "title": "Trang cá nhân",
+    "description": "Quản lý trang cá nhân",
+    "home": "Trang chủ",
+    "profile": "Trang cá nhân",
+    "saveProfile": "Lưu thay đổi",
+    "updateSuccess": "Cập nhật profile thành công",
+    "updateFailed": "Cập nhật profile thất bại",
+    "form": {
+      "name": "Họ tên",
+      "namePlaceholder": "Nhập họ tên",
+      "email": "Email",
+      "emailPlaceholder": "Nhập email",
+      "phone": "Số điện thoại",
+      "phonePlaceholder": "Nhập số điện thoại",
+      "address": "Địa chỉ",
+      "addressPlaceholder": "Nhập địa chỉ",
+      "dateOfBirth": "Ngày sinh",
+      "gender": "Giới tính",
+      "genderPlaceholder": "Chọn giới tính",
+      "male": "Nam",
+      "female": "Nữ",
+      "saveChanges": "Lưu thay đổi",
+      "changePassword": "Đổi mật khẩu",
+      "uploadSuccess": "Tải ảnh lên thành công",
+      "uploadFailed": "Tải ảnh lên thất bại",
+      "uploading": "Đang tải ảnh lên...",
+      "compressing": "Đang nén ảnh...",
+      "compressionFailed": "Nén ảnh thất bại. Sử dụng file gốc.",
+      "selectImage": "Chọn ảnh",
+      "uploadInfo": {
+        "title": "Yêu cầu upload ảnh",
+        "maxSize": "Kích thước tối đa: 10MB",
+        "supportedFormats": "Định dạng hỗ trợ: JPG, PNG, GIF, WebP",
+        "note": "Ảnh sẽ được tự động nén xuống tối đa 1MB trước khi upload"
+      },
+      "updateImage": "Cập nhật ảnh",
+      "removeImage": "Xóa ảnh",
+      "imageSelected": "Ảnh đã được chọn",
+      "fileTooLarge": "Kích thước file quá lớn (tối đa 5MB)",
+      "invalidFileType": "File không hợp lệ. Vui lòng chọn file ảnh",
+      "validation": {
+        "nameRequired": "Họ tên là bắt buộc",
+        "emailRequired": "Email là bắt buộc",
+        "emailInvalid": "Vui lòng nhập email hợp lệ"
+      }
+    }
+  },
+  "ChangePasswordPage": {
+    "title": "Đổi mật khẩu",
+    "description": "Thay đổi mật khẩu tài khoản của bạn",
+    "home": "Trang chủ",
+    "profile": "Trang cá nhân",
+    "changePassword": "Đổi mật khẩu",
+    "changePasswordSuccess": "Đổi mật khẩu thành công",
+    "changePasswordFailed": "Đổi mật khẩu thất bại",
+    "form": {
+      "currentPassword": "Mật khẩu hiện tại",
+      "currentPasswordPlaceholder": "Nhập mật khẩu hiện tại",
+      "newPassword": "Mật khẩu mới",
+      "newPasswordPlaceholder": "Nhập mật khẩu mới",
+      "confirmPassword": "Nhập lại mật khẩu mới",
+      "confirmPasswordPlaceholder": "Nhập lại mật khẩu mới",
+      "saveChanges": "Lưu thay đổi",
+      "validation": {
+        "currentPasswordRequired": "Mật khẩu hiện tại là bắt buộc",
+        "newPasswordRequired": "Mật khẩu mới là bắt buộc",
+        "passwordMin": "Mật khẩu phải có ít nhất 8 ký tự",
+        "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
+        "passwordMismatch": "Mật khẩu không khớp",
+        "samePassword": "Mật khẩu mới phải khác với mật khẩu hiện tại"
+      }
+    }
+  },
+  "ForgotPasswordModal": {
+    "title": "Quên mật khẩu",
+    "description": "Nhập email để đặt lại mật khẩu",
+    "email": "Email",
+    "emailPlaceholder": "Nhập email của bạn",
+    "emailRequired": "Email là bắt buộc",
+    "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ",
+    "confirm": "Xác nhận",
+    "cancel": "Hủy",
+    "successMessage": "Link đặt lại mật khẩu đã được gửi đến email của bạn",
+    "errorMessage": "Không thể gửi link đặt lại mật khẩu"
+  },
+  "ResetPasswordPage": {
+    "title": "Đặt lại mật khẩu",
+    "description": "Nhập mật khẩu mới của bạn",
+    "resetPasswordSuccess": "Đặt lại mật khẩu thành công",
+    "resetPasswordFailed": "Đặt lại mật khẩu thất bại",
+    "form": {
+      "newPassword": "Mật khẩu mới",
+      "newPasswordPlaceholder": "Nhập mật khẩu mới",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "confirmPasswordPlaceholder": "Nhập lại mật khẩu mới",
+      "resetPassword": "Đặt lại mật khẩu",
+      "success": "Đặt lại mật khẩu thành công",
+      "error": "Không thể đặt lại mật khẩu. Vui lòng thử lại.",
+      "validation": {
+        "newPasswordRequired": "Mật khẩu mới là bắt buộc",
+        "passwordMin": "Mật khẩu phải có ít nhất 8 ký tự",
+        "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
+        "passwordMismatch": "Mật khẩu không khớp"
+      }
+    }
+  },
+  "Email": {
+    "forgotPassword": {
+      "subject": "Đặt lại mật khẩu của bạn",
+      "expiryTime": "1 giờ",
+      "text": "Đặt lại mật khẩu của bạn bằng cách nhấp vào liên kết này: {{resetLink}}"
+    }
   }
 }

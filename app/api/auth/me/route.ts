@@ -37,7 +37,7 @@ export async function GET() {
     const escapedUserId = JSON.stringify(userId);
     const findUserQuery = `
       query GetUserById {
-        user(where: { _and: [{ id: { _eq: ${escapedUserId} } }, { deletedAt: { _is_null: true } }] }) {
+        User(where: { _and: [{ id: { _eq: ${escapedUserId} } }, { deletedAt: { _is_null: true } }] }) {
           id
           email
           name
@@ -55,7 +55,7 @@ export async function GET() {
     `;
 
     const userResult = await hasura<{
-      user: Array<{
+      User: Array<{
         id: number;
         email: string;
         name: string | null;
@@ -71,14 +71,14 @@ export async function GET() {
       }>;
     }>(findUserQuery);
 
-    if (!userResult.user || userResult.user.length === 0) {
+    if (!userResult.User || userResult.User.length === 0) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
         { status: 404 }
       );
     }
 
-    const dbUser = userResult.user[0];
+    const dbUser = userResult.User[0];
 
     // Map to UserType format (id should be string)
     const user: UserType = {

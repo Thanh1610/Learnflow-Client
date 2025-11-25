@@ -9,7 +9,8 @@ import {
   DrawerHeader,
 } from '@heroui/drawer';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
-import { ReactNode, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { ReactNode, useEffect, useRef } from 'react';
 import { useSidebar } from './SidebarContext';
 import { useIsMobile } from './useIsMobile';
 
@@ -23,27 +24,36 @@ interface SidebarProps {
 export function Sidebar({ children, header, footer, className }: SidebarProps) {
   const { isOpen, toggle, close, setIsMobile } = useSidebar();
   const isMobile = useIsMobile();
+  const pathname = usePathname();
+  const prevPathnameRef = useRef(pathname);
 
   useEffect(() => {
     setIsMobile(isMobile);
   }, [isMobile, setIsMobile]);
 
+  useEffect(() => {
+    if (isMobile && pathname !== prevPathnameRef.current && isOpen) {
+      close();
+    }
+    prevPathnameRef.current = pathname;
+  }, [pathname, isMobile, isOpen, close]);
+
   const sidebarContent = (
     <div
       className={cn(
-        'flex flex-col h-full bg-background border-r border-divider',
+        'bg-background border-divider flex h-full flex-col border-r',
         className
       )}
     >
       {/* Header */}
       <div
         className={cn(
-          'flex items-center border-b border-divider',
+          'border-divider flex items-center border-b',
           isMobile
             ? 'justify-between p-4'
             : isOpen
               ? 'p-4'
-              : 'p-2 justify-center'
+              : 'justify-center p-2'
         )}
       >
         {header && (
@@ -59,9 +69,9 @@ export function Sidebar({ children, header, footer, className }: SidebarProps) {
             className={isOpen ? 'ml-auto' : ''}
           >
             {isOpen ? (
-              <PanelLeftClose className="w-5 h-5" />
+              <PanelLeftClose className="h-5 w-5" />
             ) : (
-              <PanelLeftOpen className="w-5 h-5" />
+              <PanelLeftOpen className="h-5 w-5" />
             )}
           </Button>
         )}
@@ -73,7 +83,7 @@ export function Sidebar({ children, header, footer, className }: SidebarProps) {
             onPress={close}
             aria-label="Close sidebar"
           >
-            <PanelLeftClose className="w-5 h-5" />
+            <PanelLeftClose className="h-5 w-5" />
           </Button>
         )}
       </div>
@@ -85,7 +95,7 @@ export function Sidebar({ children, header, footer, className }: SidebarProps) {
       {footer && (
         <div
           className={cn(
-            'border-t border-divider',
+            'border-divider border-t',
             isMobile || isOpen ? 'p-4' : 'p-2'
           )}
         >
@@ -95,23 +105,21 @@ export function Sidebar({ children, header, footer, className }: SidebarProps) {
     </div>
   );
 
-  // Mobile: Drawer
   if (isMobile) {
     return (
       <Drawer isOpen={isOpen} onOpenChange={toggle} placement="left">
         <DrawerContent className="max-w-[280px] [&>button]:hidden">
-          <DrawerHeader className="p-0 hidden">{null}</DrawerHeader>
+          <DrawerHeader className="hidden p-0">{null}</DrawerHeader>
           <DrawerBody className="p-0">{sidebarContent}</DrawerBody>
         </DrawerContent>
       </Drawer>
     );
   }
 
-  // Desktop: Fixed Sidebar
   return (
     <aside
       className={cn(
-        'fixed left-0 top-17 h-[calc(100vh-4rem)] z-40 transition-all duration-300',
+        'fixed top-17 left-0 z-40 h-[calc(100vh-4rem)] transition-all duration-300',
         isOpen ? 'w-[280px]' : 'w-[72px]'
       )}
     >

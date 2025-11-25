@@ -1,0 +1,1 @@
+export { forgotPasswordMailTemplate } from './forgotPasswordMailTemplate';

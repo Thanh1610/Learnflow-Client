@@ -28,12 +28,23 @@ async function drainResponse(response: Response) {
 
 function buildRequestInit<TBody>(init?: FetcherInit<TBody>): RequestInit {
   const method = init?.method ?? (init?.body ? 'POST' : 'GET');
-  const headers = {
-    ...defaultHeaders,
-    ...(init?.headers ?? {}),
-  };
+
+  // Check if body is FormData - if so, don't set Content-Type (browser will set it with boundary)
+  const isFormData = init?.body instanceof FormData;
+
+  const headers = isFormData
+    ? {
+        // Only set Accept header for FormData, let browser set Content-Type
+        Accept: 'application/json',
+        ...(init?.headers ?? {}),
+      }
+    : {
+        ...defaultHeaders,
+        ...(init?.headers ?? {}),
+      };
+
   const body =
-    typeof init?.body === 'string' || init?.body === undefined
+    typeof init?.body === 'string' || init?.body === undefined || isFormData
       ? (init?.body as BodyInit | null | undefined)
       : JSON.stringify(init?.body);
 
