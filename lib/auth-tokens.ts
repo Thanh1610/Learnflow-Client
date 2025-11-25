@@ -42,28 +42,30 @@ export async function issueTokensForUser(
   );
 
   // Lưu client refresh token vào database
-  const escapedRefreshToken = JSON.stringify(clientRefreshToken);
-  const escapedExpiresAt = JSON.stringify(
-    clientRefreshTokenExpiresAt.toISOString()
-  );
   const updateUserMutation = `
-    mutation UpdateUserClientRefreshToken {
-      updateUserById(
-        keyId: ${user.id}
-        updateColumns: {
-          clientRefreshToken: { set: ${escapedRefreshToken} }
-          clientRefreshTokenExpiresAt: { set: ${escapedExpiresAt} }
+    mutation UpdateUserClientRefreshToken(
+      $id: Int!
+      $refreshToken: String!
+      $expiresAt: timestamp!
+    ) {
+      update_User_by_pk(
+        pk_columns: { id: $id }
+        _set: {
+          clientRefreshToken: $refreshToken
+          clientRefreshTokenExpiresAt: $expiresAt
         }
       ) {
-        returning {
           id
-        }
       }
     }
   `;
 
   try {
-    await hasura(updateUserMutation);
+    await hasura(updateUserMutation, {
+      id: user.id,
+      refreshToken: clientRefreshToken,
+      expiresAt: clientRefreshTokenExpiresAt.toISOString(),
+    });
   } catch (updateError) {
     console.error('Failed to update refresh token:', updateError);
     throw new Error('Failed to save refresh token to database');

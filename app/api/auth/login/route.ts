@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     const findUserQuery = `
       query FindUserForLogin {
-        user(where: { _and: [{ email: { _eq: ${escapedEmail} } }, { deletedAt: { _is_null: true } }] }) {
+        User(where: { _and: [{ email: { _eq: ${escapedEmail} } }, { deletedAt: { _is_null: true } }] }) {
           id
           email
           name
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     console.log('Step 1: Finding user by email:', emailString);
     const userResult = await hasura<{
-      user: Array<{
+      User: Array<{
         id: number;
         email: string;
         name: string | null;
@@ -50,13 +50,13 @@ export async function POST(req: Request) {
     }>(findUserQuery);
     console.log('Step 1 result:', {
       ...userResult,
-      user: userResult.user?.map(u => ({
+      user: userResult.User?.map(u => ({
         ...u,
         password: u.password ? '***' : null,
       })),
     });
 
-    if (!userResult.user || userResult.user.length === 0) {
+    if (!userResult.User || userResult.User.length === 0) {
       console.log('User not found');
       return NextResponse.json(
         { success: false, error: 'User not found' },
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = userResult.user[0];
+    const user = userResult.User[0];
     console.log('User found:', {
       id: user.id,
       email: user.email,
@@ -104,20 +104,20 @@ export async function POST(req: Request) {
     ).toISOString();
 
     // Cập nhật client refresh token vào database bằng Hasura mutation
+    // (inline string values để tránh bug Hasura DDN với biến kiểu String/timestamptz)
     const escapedRefreshToken = JSON.stringify(clientRefreshToken);
     const escapedExpiresAt = JSON.stringify(clientRefreshTokenExpiresAt);
+
     const updateUserMutation = `
       mutation UpdateUserClientRefreshToken {
-        updateUserById(
-          keyId: ${user.id}
-          updateColumns: {
-            clientRefreshToken: { set: ${escapedRefreshToken} }
-            clientRefreshTokenExpiresAt: { set: ${escapedExpiresAt} }
+        update_User_by_pk(
+          pk_columns: { id: ${user.id} }
+          _set: {
+            clientRefreshToken: ${escapedRefreshToken}
+            clientRefreshTokenExpiresAt: ${escapedExpiresAt}
           }
         ) {
-          returning {
             id
-          }
         }
       }
     `;

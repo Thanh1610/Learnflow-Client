@@ -39,7 +39,7 @@ export async function getUserById(userId: number): Promise<UserType | null> {
     const escapedUserId = JSON.stringify(userId);
     const findUserQuery = `
       query GetUserById {
-        user(where: { _and: [{ id: { _eq: ${escapedUserId} } }, { deletedAt: { _is_null: true } }] }) {
+        User(where: { _and: [{ id: { _eq: ${escapedUserId} } }, { deletedAt: { _is_null: true } }] }) {
           id
           email
           name
@@ -58,7 +58,7 @@ export async function getUserById(userId: number): Promise<UserType | null> {
     `;
 
     const userResult = await hasura<{
-      user: Array<{
+      User: Array<{
         id: number;
         email: string;
         name: string | null;
@@ -75,11 +75,11 @@ export async function getUserById(userId: number): Promise<UserType | null> {
       }>;
     }>(findUserQuery);
 
-    if (!userResult.user || userResult.user.length === 0) {
+    if (!userResult.User || userResult.User.length === 0) {
       return null;
     }
 
-    const dbUser = userResult.user[0];
+    const dbUser = userResult.User[0];
 
     // Map to UserType format (id should be string, dateofbirth -> dateOfBirth)
     const user: UserType & { dateOfBirth?: string | null } = {

@@ -68,8 +68,8 @@ export async function POST(req: NextRequest) {
     }
 
     const getUserQuery = `
-      query GetUserPassword($id: Int32!) {
-        user(where: { id: { _eq: $id } }) {
+      query GetUserPassword($id: Int!) {
+        User(where: { id: { _eq: $id } }) {
           id
           password
         }
@@ -77,13 +77,13 @@ export async function POST(req: NextRequest) {
     `;
 
     const userResult = await hasura<{
-      user: Array<{
+      User: Array<{
         id: number;
         password: string | null;
       }>;
     }>(getUserQuery, { id: userIdNumber });
 
-    const user = userResult.user?.[0];
+    const user = userResult.User?.[0];
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'User not found' },
@@ -114,16 +114,10 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await hash(newPassword, 10);
 
     // Update password in database
-    const escapedPassword = JSON.stringify(hashedPassword);
     const updatePasswordMutation = `
-      mutation UpdatePassword {
-        updateUserById(
-          keyId: ${userIdNumber}
-          updateColumns: {
-            password: { set: ${escapedPassword} }
-          }
-        ) {
-          affectedRows
+      mutation UpdatePassword($id: Int!, $password: String!) {
+        update_User(where: { id: { _eq: $id } }, _set: { password: $password }) {
+          affected_rows
           returning {
             id
           }
@@ -132,13 +126,13 @@ export async function POST(req: NextRequest) {
     `;
 
     const updateResult = await hasura<{
-      updateUserById: {
-        affectedRows: number;
+      update_User: {
+        affected_rows: number;
         returning: Array<{ id: number }>;
       };
-    }>(updatePasswordMutation);
+    }>(updatePasswordMutation, { id: userIdNumber, password: hashedPassword });
 
-    if (updateResult.updateUserById.affectedRows === 0) {
+    if (updateResult.update_User.affected_rows === 0) {
       return NextResponse.json(
         { success: false, error: 'Failed to update password' },
         { status: 500 }

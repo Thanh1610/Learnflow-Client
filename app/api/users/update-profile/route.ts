@@ -4,8 +4,8 @@ import type { UserType } from '@/types/user.type';
 import { NextRequest, NextResponse } from 'next/server';
 
 type UpdateUserResponse = {
-  updateUserById: {
-    affectedRows: number;
+  update_User: {
+    affected_rows: number;
     returning: Array<
       Omit<UserType, 'dateOfBirth'> & {
         dateofbirth: string | null;
@@ -103,15 +103,6 @@ function validateGender(gender: unknown): '1' | '2' | null | NextResponse {
 }
 
 /**
- * Builds gender set clause for GraphQL mutation
- */
-function buildGenderSetClause(gender: '1' | '2' | null): string {
-  return gender !== null
-    ? `gender: { set: "${gender}" }`
-    : `gender: { set: null }`;
-}
-
-/**
  * Maps GraphQL user response to TypeScript UserType
  * Converts dateofbirth (GraphQL lowercase) to dateOfBirth (TypeScript camelCase)
  * Converts id from number to string
@@ -179,28 +170,30 @@ export async function POST(req: NextRequest) {
     // Build mutation
     const mutation = `
       mutation UpdateUserProfile(
-        $id: Int32!
-        $name: String1
-        $email: String1!
-        $phone: String1
-        $address: String1
-        $dateofbirth: Date
-        $avatar: String1
+        $id: Int!
+        $name: String
+        $email: String!
+        $phone: String
+        $address: String
+        $dateofbirth: date
+        $avatar: String
+        $gender: Gender
       ) {
-        updateUserById(
-          keyId: $id
-          preCheck: { deletedAt: { _is_null: true } }
-          updateColumns: {
-            name: { set: $name }
-            email: { set: $email }
-            phone: { set: $phone }
-            address: { set: $address }
-            dateofbirth: { set: $dateofbirth }
-            avatar: { set: $avatar }
-            ${buildGenderSetClause(genderValue)}
+        update_User(
+          where: {
+            _and: [{ id: { _eq: $id } }, { deletedAt: { _is_null: true } }]
+          }
+          _set: {
+            name: $name
+            email: $email
+            phone: $phone
+            address: $address
+            dateofbirth: $dateofbirth
+            avatar: $avatar
+            gender: $gender
           }
         ) {
-          affectedRows
+          affected_rows
           returning {
             ${USER_FIELDS}
           }
@@ -218,17 +211,18 @@ export async function POST(req: NextRequest) {
       address: address?.trim() || null,
       dateofbirth: dateOfBirth || null, // GraphQL uses lowercase
       avatar: avatar?.trim() || null,
+      gender: genderValue,
     });
 
     // Check result
-    if (result.updateUserById.affectedRows === 0) {
+    if (result.update_User.affected_rows === 0) {
       return NextResponse.json(
         { success: false, error: 'User not found or has been deleted' },
         { status: 404 }
       );
     }
 
-    const updatedUser = result.updateUserById.returning[0];
+    const updatedUser = result.update_User.returning[0];
     if (!updatedUser) {
       return NextResponse.json(
         { success: false, error: 'User not found' },

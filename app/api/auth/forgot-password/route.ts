@@ -77,7 +77,7 @@ export async function POST(req: Request) {
 
     const findUserQuery = `
       query FindUserByEmail {
-        user(where: { _and: [{ email: { _eq: ${escapedEmail} } }, { deletedAt: { _is_null: true } }] }) {
+        User(where: { _and: [{ email: { _eq: ${escapedEmail} } }, { deletedAt: { _is_null: true } }] }) {
           id
           email
           name
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
     `;
 
     const userResult = await hasura<{
-      user: Array<{
+      User: Array<{
         id: number;
         email: string;
         name: string | null;
@@ -94,14 +94,14 @@ export async function POST(req: Request) {
     }>(findUserQuery);
 
     // Không tiết lộ thông tin về việc email có tồn tại hay không (security best practice)
-    if (!userResult.user || userResult.user.length === 0) {
+    if (!userResult.User || userResult.User.length === 0) {
       return NextResponse.json({
         success: true,
         message: 'If the email exists, a reset link has been sent.',
       });
     }
 
-    const user = userResult.user[0];
+    const user = userResult.User[0];
 
     // Tạo oobCode (out-of-band code)
     const oobCode = randomBytes(32).toString('hex');
@@ -110,26 +110,27 @@ export async function POST(req: Request) {
     ).toISOString();
 
     // Cập nhật oobCode vào database
-    const escapedOobCode = JSON.stringify(oobCode);
-    const escapedExpiresAt = JSON.stringify(oobCodeExpiresAt);
     const updateUserMutation = `
-      mutation UpdateUserOobCode {
-        updateUserById(
-          keyId: ${user.id}
-          updateColumns: {
-            oobCode: { set: ${escapedOobCode} }
-            oobCodeExpiresAt: { set: ${escapedExpiresAt} }
-          }
+      mutation UpdateUserOobCode(
+        $id: Int!
+        $oobCode: String!
+        $expiresAt: timestamptz!
+      ) {
+        update_User_by_pk(
+          pk_columns: { id: $id }
+          _set: { oobCode: $oobCode, oobCodeExpiresAt: $expiresAt }
         ) {
-          returning {
-            id
-          }
+          id
         }
       }
     `;
 
     try {
-      await hasura(updateUserMutation);
+      await hasura(updateUserMutation, {
+        id: user.id,
+        oobCode,
+        expiresAt: oobCodeExpiresAt,
+      });
     } catch (updateError) {
       console.error('Failed to update oobCode:', updateError);
       return NextResponse.json(

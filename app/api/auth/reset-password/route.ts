@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
     const findUserQuery = `
       query FindUserByOobCode {
-        user(
+        User(
           where: {
             _and: [
               { oobCode: { _eq: ${escapedOobCode} } }
@@ -53,13 +53,13 @@ export async function POST(req: Request) {
     `;
 
     const userResult = await hasura<{
-      user: Array<{
+      User: Array<{
         id: number;
         email: string;
       }>;
     }>(findUserQuery);
 
-    if (!userResult.user || userResult.user.length === 0) {
+    if (!userResult.User || userResult.User.length === 0) {
       return NextResponse.json(
         {
           success: false,
@@ -69,45 +69,35 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = userResult.user[0];
+    const user = userResult.User[0];
 
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update password and clear oobCode
-    const escapedPassword = JSON.stringify(hashedPassword);
     const updatePasswordMutation = `
-      mutation UpdatePasswordAndClearOobCode {
-        updateUserById(
-          keyId: ${user.id}
-          updateColumns: {
-            password: { set: ${escapedPassword} }
-            oobCode: { set: null }
-            oobCodeExpiresAt: { set: null }
+      mutation UpdatePasswordAndClearOobCode(
+        $id: Int!
+        $password: String!
+      ) {
+        update_User_by_pk(
+          pk_columns: { id: $id }
+          _set: {
+            password: $password
+            oobCode: null
+            oobCodeExpiresAt: null
           }
         ) {
-          affectedRows
-          returning {
             id
-          }
         }
       }
     `;
 
     try {
-      const updateResult = await hasura<{
-        updateUserById: {
-          affectedRows: number;
-          returning: Array<{ id: number }>;
-        };
-      }>(updatePasswordMutation);
-
-      if (updateResult.updateUserById.affectedRows === 0) {
-        return NextResponse.json(
-          { success: false, error: 'Failed to update password' },
-          { status: 500 }
-        );
-      }
+      await hasura(updatePasswordMutation, {
+        id: user.id,
+        password: hashedPassword,
+      });
     } catch (updateError) {
       console.error('Failed to update password:', updateError);
       return NextResponse.json(

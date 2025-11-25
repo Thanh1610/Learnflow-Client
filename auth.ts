@@ -38,7 +38,7 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
       const escapedGoogleId = JSON.stringify(googleId);
       findUserQuery = `
         query FindUserForSocialLogin {
-          user(where: { _and: [
+          User(where: { _and: [
             { _or: [
               { email: { _eq: ${escapedEmail} } },
               { googleId: { _eq: ${escapedGoogleId} } }
@@ -59,7 +59,7 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
       const escapedGithubId = JSON.stringify(githubId);
       findUserQuery = `
         query FindUserForSocialLogin {
-          user(where: { _and: [
+          User(where: { _and: [
             { _or: [
               { email: { _eq: ${escapedEmail} } },
               { githubId: { _eq: ${escapedGithubId} } }
@@ -79,7 +79,7 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
     } else {
       findUserQuery = `
         query FindUserForSocialLogin {
-          user(where: { _and: [
+          User(where: { _and: [
             { email: { _eq: ${escapedEmail} } },
             { deletedAt: { _is_null: true } }
           ] }) {
@@ -96,7 +96,7 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
     }
 
     const userResult = await hasura<{
-      user: Array<{
+      User: Array<{
         id: number;
         email: string;
         name: string | null;
@@ -108,36 +108,38 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
     }>(findUserQuery);
 
     let existingUser =
-      userResult.user && userResult.user.length > 0 ? userResult.user[0] : null;
+      userResult.User && userResult.User.length > 0 ? userResult.User[0] : null;
 
     // 2. Nếu user chưa tồn tại, tạo user mới
     if (!existingUser) {
       // Tìm hoặc tạo General Department
       const findDepartmentQuery = `
         query FindDepartment {
-          department(where: { _and: [{ name: { _eq: ${JSON.stringify(GENERAL_DEPARTMENT_NAME)} } }, { deletedAt: { _is_null: true } }] }) {
+          Department(where: { _and: [{ name: { _eq: ${JSON.stringify(GENERAL_DEPARTMENT_NAME)} } }, { deletedAt: { _is_null: true } }] }) {
             id
           }
         }
       `;
 
       const departmentResult = await hasura<{
-        department: Array<{ id: number }>;
+        Department: Array<{ id: number }>;
       }>(findDepartmentQuery);
 
       let departmentId: number;
 
       if (
-        departmentResult.department &&
-        departmentResult.department.length > 0
+        departmentResult.Department &&
+        departmentResult.Department.length > 0
       ) {
-        departmentId = departmentResult.department[0].id;
+        departmentId = departmentResult.Department[0].id;
       } else {
         // Tạo General Department nếu chưa có
         const now = new Date().toISOString();
         const createDepartmentMutation = `
           mutation CreateDepartment {
-            insertDepartment(objects: [{ name: ${JSON.stringify(GENERAL_DEPARTMENT_NAME)}, updatedAt: ${JSON.stringify(now)} }]) {
+            insert_Department(objects: [{ name: ${JSON.stringify(
+              GENERAL_DEPARTMENT_NAME
+            )}, updatedAt: ${JSON.stringify(now)} }]) {
               returning {
                 id
               }
@@ -146,17 +148,17 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
         `;
 
         const createDeptResult = await hasura<{
-          insertDepartment: { returning: Array<{ id: number }> };
+          insert_Department: { returning: Array<{ id: number }> };
         }>(createDepartmentMutation);
 
         if (
-          !createDeptResult.insertDepartment.returning ||
-          createDeptResult.insertDepartment.returning.length === 0
+          !createDeptResult.insert_Department.returning ||
+          createDeptResult.insert_Department.returning.length === 0
         ) {
           throw new Error('Failed to create General Department');
         }
 
-        departmentId = createDeptResult.insertDepartment.returning[0].id;
+        departmentId = createDeptResult.insert_Department.returning[0].id;
       }
 
       // Tạo user mới
@@ -181,8 +183,8 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
       }
 
       const createUserMutation = `
-        mutation CreateUser($objects: [InsertUserObjectInput!]!) {
-          insertUser(objects: $objects) {
+        mutation CreateUser($objects: [User_insert_input!]!) {
+          insert_User(objects: $objects) {
             returning {
               id
               email
@@ -194,7 +196,7 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
       `;
 
       const createUserResult = await hasura<{
-        insertUser: {
+        insert_User: {
           returning: Array<{
             id: number;
             email: string;
@@ -207,30 +209,30 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
       });
 
       if (
-        !createUserResult.insertUser.returning ||
-        createUserResult.insertUser.returning.length === 0
+        !createUserResult.insert_User.returning ||
+        createUserResult.insert_User.returning.length === 0
       ) {
         throw new Error('Failed to create user');
       }
 
-      const newUser = createUserResult.insertUser.returning[0];
+      const newUser = createUserResult.insert_User.returning[0];
       const userId = newUser.id;
 
       // Link user vào General Department
       try {
         const linkUserDepartmentMutation = `
-          mutation LinkUserDepartment($objects: [InsertUserDepartmentsObjectInput!]!) {
-            insertUserDepartments(objects: $objects) {
+          mutation LinkUserDepartment($objects: [_UserDepartments_insert_input!]!) {
+            insert__UserDepartments(objects: $objects) {
               returning {
-                a
-                b
+                A
+                B
               }
             }
           }
         `;
 
         await hasura(linkUserDepartmentMutation, {
-          objects: [{ a: userId, b: departmentId }],
+          objects: [{ A: userId, B: departmentId }],
         });
       } catch (linkError) {
         console.error('Failed to link user to department:', linkError);
@@ -270,14 +272,14 @@ async function ensureUserRecord(user: NextAuthUser, account?: Account | null) {
         }
 
         const updateColumnsString = Object.entries(updateColumns)
-          .map(([key, value]) => `${key}: { set: ${value.set} }`)
+          .map(([key, value]) => `${key}: ${value.set}`)
           .join('\n                ');
 
         const updateUserMutation = `
           mutation UpdateUserSocialId {
-            updateUserById(
-              keyId: ${existingUser.id}
-              updateColumns: {
+            update_User(
+              where: { id: { _eq: ${existingUser.id} } }
+              _set: {
                 ${updateColumnsString}
               }
             ) {
@@ -368,7 +370,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const escapedEmail = JSON.stringify(emailString);
         const findUserQuery = `
           query FindUserForJWT {
-            user(where: { _and: [{ email: { _eq: ${escapedEmail} } }, { deletedAt: { _is_null: true } }] }) {
+            User(where: { _and: [{ email: { _eq: ${escapedEmail} } }, { deletedAt: { _is_null: true } }] }) {
               id
               email
               name
@@ -379,7 +381,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         try {
           const userResult = await hasura<{
-            user: Array<{
+            User: Array<{
               id: number;
               email: string;
               name: string | null;
@@ -387,8 +389,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }>;
           }>(findUserQuery);
 
-          if (userResult.user && userResult.user.length > 0) {
-            const dbUser = userResult.user[0];
+          if (userResult.User && userResult.User.length > 0) {
+            const dbUser = userResult.User[0];
             enrichedToken.sub = String(dbUser.id);
             enrichedToken.email = dbUser.email;
             enrichedToken.role = dbUser.role;
@@ -409,7 +411,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const escapedEmail = JSON.stringify(enrichedToken.email);
         const findUserQuery = `
           query FindUserForJWT {
-            user(where: { _and: [{ email: { _eq: ${escapedEmail} } }, { deletedAt: { _is_null: true } }] }) {
+            User(where: { _and: [{ email: { _eq: ${escapedEmail} } }, { deletedAt: { _is_null: true } }] }) {
               id
               role
               name
@@ -419,15 +421,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         try {
           const userResult = await hasura<{
-            user: Array<{
+            User: Array<{
               id: number;
               role: string;
               name: string | null;
             }>;
           }>(findUserQuery);
 
-          if (userResult.user && userResult.user.length > 0) {
-            const dbUser = userResult.user[0];
+          if (userResult.User && userResult.User.length > 0) {
+            const dbUser = userResult.User[0];
             enrichedToken.role = dbUser.role;
             if (dbUser.name) {
               enrichedToken.name = dbUser.name;
