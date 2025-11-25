@@ -11,4 +11,7 @@ export type UserType = {
   googleId?: string | null;
   githubId?: string | null;
   deletedAt?: Date | null;
+  dateOfBirth?: string | null;
+  oobCode?: string | null;
+  oobCodeExpiresAt?: string | null;
 };

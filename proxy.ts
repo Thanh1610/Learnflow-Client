@@ -8,8 +8,16 @@ import {
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-const publicRoutes: string[] = [PAGE_ROUTES.LOGIN, PAGE_ROUTES.REGISTER];
-const authRoutes: string[] = [PAGE_ROUTES.LOGIN, PAGE_ROUTES.REGISTER];
+const publicRoutes: string[] = [
+  PAGE_ROUTES.LOGIN,
+  PAGE_ROUTES.REGISTER,
+  PAGE_ROUTES.RESET_PASSWORD_PAGE,
+];
+const authRoutes: string[] = [
+  PAGE_ROUTES.LOGIN,
+  PAGE_ROUTES.REGISTER,
+  PAGE_ROUTES.RESET_PASSWORD_PAGE,
+];
 const publicPrefixes = ['/_next', '/static', '/favicon.ico', '/api/auth'];
 
 export async function proxy(request: NextRequest) {

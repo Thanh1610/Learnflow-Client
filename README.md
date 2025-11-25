@@ -22,21 +22,6 @@ JWT_SECRET="change-me-to-a-long-random-string"
 npm install
 ```
 
-## Thiết lập cơ sở dữ liệu
-
-1. Đảm bảo Postgres trong `DATABASE_URL` đang chạy.
-2. Đẩy schema Prisma:
-
-   ```bash
-   npx prisma db push
-   ```
-
-3. (Tùy chọn) Kiểm tra kết nối:
-
-   ```bash
-   npm run db:test
-   ```
-
 ## Getting Started
 
 First, run the development server:

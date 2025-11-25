@@ -14,7 +14,7 @@ export async function POST() {
       // Tìm user bằng clientRefreshToken trước
       const findUserQuery = `
         query FindUserByClientRefreshToken {
-          user(where: { clientRefreshToken: { _eq: ${escapedRefreshToken} } }) {
+          User(where: { clientRefreshToken: { _eq: ${escapedRefreshToken} } }) {
             id
           }
         }
@@ -22,28 +22,26 @@ export async function POST() {
 
       try {
         const userResult = await hasura<{
-          user: Array<{ id: number }>;
+          User: Array<{ id: number }>;
         }>(findUserQuery);
 
-        if (userResult.user && userResult.user.length > 0) {
-          const userId = userResult.user[0].id;
+        if (userResult.User && userResult.User.length > 0) {
+          const userId = userResult.User[0].id;
           const clearRefreshTokenMutation = `
-            mutation ClearUserClientRefreshToken {
-              updateUserById(
-                keyId: ${userId}
-                updateColumns: {
-                  clientRefreshToken: { set: null }
-                  clientRefreshTokenExpiresAt: { set: null }
+            mutation ClearUserClientRefreshToken($id: Int!) {
+              update_User_by_pk(
+                pk_columns: { id: $id }
+                _set: {
+                  clientRefreshToken: null
+                  clientRefreshTokenExpiresAt: null
                 }
               ) {
-                returning {
                   id
-                }
               }
             }
           `;
 
-          await hasura(clearRefreshTokenMutation);
+          await hasura(clearRefreshTokenMutation, { id: userId });
         }
       } catch (updateError) {
         console.error('Failed to clear client refresh token:', updateError);

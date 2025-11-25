@@ -1,5 +1,5 @@
 export function getHasuraUrl(): string {
-  return process.env.HASURA_URL || 'http://localhost:3280/graphql';
+  return process.env.HASURA_URL || 'http://localhost:8080/v1/graphql';
 }
 
 export function getHasuraAdminSecret(): string {

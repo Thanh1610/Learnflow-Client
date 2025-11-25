@@ -2,38 +2,40 @@ import { hasura } from '@/lib/hasura';
 import { verifyToken } from '@/lib/jwt';
 import type { UserType } from '@/types/user.type';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { redirect } from 'next/navigation';
 
-export async function GET() {
+/**
+ * Lấy JWT payload từ cookie (server-side)
+ * @returns JWTPayload hoặc null nếu không có token hoặc token invalid
+ */
+export async function getServerUser() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('client_token')?.value;
 
     if (!token) {
-      return NextResponse.json(
-        { success: false, error: 'Not logged in' },
-        { status: 401 }
-      );
+      return null;
     }
 
-    // Verify token
     const payload = verifyToken(token);
-    if (!payload) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid session' },
-        { status: 401 }
-      );
+    return payload;
+  } catch (error) {
+    console.error('Error getting server user:', error);
+    return null;
+  }
+}
+
+/**
+ * Lấy user data từ database (server-side)
+ * @param userId User ID (number)
+ * @returns UserType hoặc null nếu không tìm thấy
+ */
+export async function getUserById(userId: number): Promise<UserType | null> {
+  try {
+    if (!userId) {
+      return null;
     }
 
-    const userId = payload.sub;
-    if (!userId || Number.isNaN(userId)) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
-    }
-
-    // Query user from Hasura
     const escapedUserId = JSON.stringify(userId);
     const findUserQuery = `
       query GetUserById {
@@ -50,6 +52,7 @@ export async function GET() {
           googleId
           githubId
           deletedAt
+          dateofbirth
         }
       }
     `;
@@ -68,20 +71,18 @@ export async function GET() {
         googleId: string | null;
         githubId: string | null;
         deletedAt: string | null;
+        dateofbirth: string | null;
       }>;
     }>(findUserQuery);
 
     if (!userResult.User || userResult.User.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
+      return null;
     }
 
     const dbUser = userResult.User[0];
 
-    // Map to UserType format (id should be string)
-    const user: UserType = {
+    // Map to UserType format (id should be string, dateofbirth -> dateOfBirth)
+    const user: UserType & { dateOfBirth?: string | null } = {
       id: String(dbUser.id),
       email: dbUser.email,
       name: dbUser.name,
@@ -94,21 +95,24 @@ export async function GET() {
       googleId: dbUser.googleId,
       githubId: dbUser.githubId,
       deletedAt: dbUser.deletedAt ? new Date(dbUser.deletedAt) : null,
+      dateOfBirth: dbUser.dateofbirth,
     };
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: user,
-        token,
-      },
-      { status: 200 }
-    );
+    return user as UserType;
   } catch (error) {
-    console.error('Error getting session:', error);
-    return NextResponse.json(
-      { success: false, error: 'Error getting session' },
-      { status: 500 }
-    );
+    console.error('Error getting user by id:', error);
+    return null;
   }
+}
+
+/**
+ * Require authentication - redirects to login if not authenticated
+ * @returns JWTPayload nếu authenticated
+ */
+export async function requireAuth() {
+  const user = await getServerUser();
+  if (!user) {
+    redirect('/auth/login');
+  }
+  return user;
 }

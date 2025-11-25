@@ -19,18 +19,18 @@ export async function POST(req: Request) {
 
     // 1. Kiểm tra email đã tồn tại chưa (chỉ check user chưa bị xóa)
     const checkEmailQuery = `
-      query CheckEmail($email: String1!) {
-        user(where: { _and: [{ email: { _eq: $email } }, { deletedAt: { _is_null: true } }] }) {
+      query CheckEmail($email: String!) {
+        User(where: { _and: [{ email: { _eq: $email } }, { deletedAt: { _is_null: true } }] }) {
           id
         }
       }
     `;
 
     const emailCheckResult = await hasura<{
-      user: Array<{ id: number }>;
+      User: Array<{ id: number }>;
     }>(checkEmailQuery, { email });
 
-    if (emailCheckResult.user && emailCheckResult.user.length > 0) {
+    if (emailCheckResult.User && emailCheckResult.User.length > 0) {
       return NextResponse.json(
         {
           success: false,
@@ -45,27 +45,27 @@ export async function POST(req: Request) {
 
     // 3. Tìm hoặc tạo General Department
     const findDepartmentQuery = `
-      query FindDepartment($name: String1!) {
-        department(where: { _and: [{ name: { _eq: $name } }, { deletedAt: { _is_null: true } }] }) {
+      query FindDepartment($name: String!) {
+        Department(where: { _and: [{ name: { _eq: $name } }, { deletedAt: { _is_null: true } }] }) {
           id
         }
       }
     `;
 
     const departmentResult = await hasura<{
-      department: Array<{ id: number }>;
+      Department: Array<{ id: number }>;
     }>(findDepartmentQuery, { name: GENERAL_DEPARTMENT_NAME });
 
     let departmentId: number;
 
-    if (departmentResult.department && departmentResult.department.length > 0) {
-      departmentId = departmentResult.department[0].id;
+    if (departmentResult.Department && departmentResult.Department.length > 0) {
+      departmentId = departmentResult.Department[0].id;
     } else {
       // Tạo General Department nếu chưa có
       const now = new Date().toISOString();
       const createDepartmentMutation = `
-        mutation CreateDepartment($objects: [InsertDepartmentObjectInput!]!) {
-          insertDepartment(objects: $objects) {
+        mutation CreateDepartment($objects: [Department_insert_input!]!) {
+          insert_Department(objects: $objects) {
             returning {
               id
             }
@@ -74,19 +74,19 @@ export async function POST(req: Request) {
       `;
 
       const createDeptResult = await hasura<{
-        insertDepartment: { returning: Array<{ id: number }> };
+        insert_Department: { returning: Array<{ id: number }> };
       }>(createDepartmentMutation, {
         objects: [{ name: GENERAL_DEPARTMENT_NAME, updatedAt: now }],
       });
 
       if (
-        !createDeptResult.insertDepartment.returning ||
-        createDeptResult.insertDepartment.returning.length === 0
+        !createDeptResult.insert_Department.returning ||
+        createDeptResult.insert_Department.returning.length === 0
       ) {
         throw new Error('Failed to create General Department');
       }
 
-      departmentId = createDeptResult.insertDepartment.returning[0].id;
+      departmentId = createDeptResult.insert_Department.returning[0].id;
     }
 
     // 4. Tạo user mới
@@ -107,8 +107,8 @@ export async function POST(req: Request) {
     }
 
     const createUserMutation = `
-      mutation CreateUser($objects: [InsertUserObjectInput!]!) {
-        insertUser(objects: $objects) {
+      mutation CreateUser($objects: [User_insert_input!]!) {
+        insert_User(objects: $objects) {
           returning {
             id
             email
@@ -120,7 +120,7 @@ export async function POST(req: Request) {
 
     try {
       const createUserResult = await hasura<{
-        insertUser: {
+        insert_User: {
           returning: Array<{ id: number; email: string; name: string | null }>;
         };
       }>(createUserMutation, {
@@ -128,20 +128,20 @@ export async function POST(req: Request) {
       });
 
       if (
-        !createUserResult.insertUser.returning ||
-        createUserResult.insertUser.returning.length === 0
+        !createUserResult.insert_User.returning ||
+        createUserResult.insert_User.returning.length === 0
       ) {
         throw new Error('Failed to create user');
       }
 
-      const newUser = createUserResult.insertUser.returning[0];
+      const newUser = createUserResult.insert_User.returning[0];
       const userId = newUser.id;
 
       // 5. Gán user vào General Department
       try {
         const linkUserDepartmentMutation = `
-          mutation LinkUserDepartment($objects: [InsertUserDepartmentsObjectInput!]!) {
-            insertUserDepartments(objects: $objects) {
+          mutation LinkUserDepartment($objects: [_UserDepartments_insert_input!]!) {
+            insert__UserDepartments(objects: $objects) {
               returning {
                 A
                 B
@@ -151,7 +151,7 @@ export async function POST(req: Request) {
         `;
 
         await hasura(linkUserDepartmentMutation, {
-          objects: [{ a: userId, b: departmentId }],
+          objects: [{ A: userId, B: departmentId }],
         });
       } catch (linkError) {
         console.error('Failed to link user to department:', linkError);
